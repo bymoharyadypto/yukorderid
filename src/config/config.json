@@ -1,0 +1,26 @@
+{
+  "development": {
+    "username": "postgres",
+    "password": "postgres",
+    "database": "yukorderid_db",
+    "host": "localhost",
+    "dialect": "postgres",
+    "port": 5432
+  },
+  "test": {
+    "username": "postgres",
+    "password": "postgres",
+    "database": "yukorderid_db_test",
+    "host": "localhost",
+    "dialect": "postgres",
+    "port": 5432
+  },
+  "production": {
+    "username": "root",
+    "password": null,
+    "database": "database_production",
+    "host": "localhost",
+    "dialect": "postgres",
+    "port": 5432
+  }
+}
