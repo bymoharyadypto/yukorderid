@@ -21,30 +21,33 @@ class UserController {
                 where: {
                     identifier: normalizedPhone,
                     type: 'register',
-                    expiresAt: { [Op.gt]: new Date() },
-                    verifiedAt: null,
+                    // expiresAt: { [Op.gt]: new Date() },
+                    // verifiedAt: null,
                 },
                 order: [['createdAt', 'DESC']]
             });
 
-            console.log(activeOtp, 'activeOtp');
 
+            if (activeOtp) {
+                const isExpired = activeOtp.expiresAt < new Date();
+                const isUsed = activeOtp.verifiedAt !== null;
 
-            if (activeOtp) throw { status: 400, message: 'OTP masih aktif, silakan tunggu beberapa menit' };
+                if (!isExpired && !isUsed) {
+                    return res.status(400).json({ message: 'OTP masih aktif, silakan tunggu beberapa saat' });
+                }
 
-            if (activeOtp && activeOtp.verifiedAt == null) {
-                await verifiedOtp.destroy({ transaction });
+                await activeOtp.destroy({ transaction });
             }
 
             const otp = await generateOtpCode();
-            const user = await db.Users.findOrCreate({
+            const [user] = await db.Users.findOrCreate({
                 where: { phoneNumber: normalizedPhone },
                 defaults: { phoneNumber: normalizedPhone, isVerified: false },
                 transaction
             });
 
             await db.UserOtps.create({
-                userId: user[0].id,
+                userId: user.id,
                 identifier: normalizedPhone,
                 otp,
                 type: 'register',
@@ -93,7 +96,7 @@ class UserController {
                 }
             });
             if (!user) throw { status: 400, message: 'User tidak ditemukan' };
-            if (!user.role) throw { status: 400, message: 'Role user tidak ditemukan' };
+            // if (!user.role) throw { status: 400, message: 'Role user tidak ditemukan' };
 
             const isProfileComplete = !!(user.name && user.email);
 
@@ -123,17 +126,19 @@ class UserController {
                 await existingToken.destroy({ transaction });
             }
 
+            const roleName = user.role?.name || 'guest';
+
             const accessToken = signAccessToken({
                 id: user.id,
                 phoneNumber: user.phoneNumber,
-                role: user.role.name,
+                role: roleName,
                 // merchants: merchantData
             });
 
             const refreshToken = signRefreshToken({
                 id: user.id,
                 phoneNumber: user.phoneNumber,
-                role: user.role.name,
+                role: roleName,
                 // merchants: merchantData
             });
 
@@ -151,6 +156,7 @@ class UserController {
                 refreshToken
             });
         } catch (err) {
+            console.error(err);
             await transaction.rollback();
             res.status(err.status || 500).send({ message: err.message || 'Gagal verifikasi OTP' });
         }
@@ -222,7 +228,7 @@ class UserController {
             const refreshToken = signRefreshToken({
                 id: user.id,
                 phoneNumber: user.phoneNumber,
-                role: user.role.name,
+                role: updatedUser.role,
             });
 
             await db.RefreshTokens.create({
