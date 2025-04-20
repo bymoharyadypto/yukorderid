@@ -2,18 +2,30 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('MerchantProductCategories', {
+    await queryInterface.createTable('MerchantDiscountPaymentMethods', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      merchantProductId: {
-        type: Sequelize.INTEGER
+      discountId: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: 'MerchantDiscounts',
+          key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
       },
-      categoryId: {
-        type: Sequelize.INTEGER
+      paymentMethodId: {
+        type: Sequelize.INTEGER,
+        references: {
+          model: 'PaymentMethods',
+          key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
       },
       createdAt: {
         allowNull: false,
@@ -28,6 +40,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('MerchantProductCategories');
+    await queryInterface.dropTable('MerchantDiscountPaymentMethods');
   }
 };

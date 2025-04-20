@@ -2,18 +2,24 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('MerchantProductCategories', {
+    await queryInterface.createTable('PaymentMethods', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      merchantProductId: {
-        type: Sequelize.INTEGER
+      name: {
+        type: Sequelize.STRING
       },
-      categoryId: {
-        type: Sequelize.INTEGER
+      type: {
+        type: Sequelize.STRING
+      },
+      provider: {
+        type: Sequelize.STRING
+      },
+      isActive: {
+        type: Sequelize.BOOLEAN
       },
       createdAt: {
         allowNull: false,
@@ -28,6 +34,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('MerchantProductCategories');
+    await queryInterface.dropTable('PaymentMethods');
   }
 };

@@ -5,6 +5,7 @@ const dayjs = require('dayjs')
 const { normalizePhone, isValidMobilePhoneNumber, generateOtpCode } = require('../../utils/otpUtils');
 const { sendOtpWhatsapp } = require('../../utils/otpUtils');
 const { signAccessToken, signRefreshToken } = require('../../helpers/jwt');
+const { signAccessTokenWithMerchants, signRefreshTokenWithMerchants } = require('../../helpers/tokenHelper');
 
 class UserController {
     static async requestOtp(req, res) {
@@ -20,7 +21,7 @@ class UserController {
             const activeOtp = await db.UserOtps.findOne({
                 where: {
                     identifier: normalizedPhone,
-                    type: 'register',
+                    // type: null,
                     // expiresAt: { [Op.gt]: new Date() },
                     // verifiedAt: null,
                 },
@@ -50,18 +51,18 @@ class UserController {
                 userId: user.id,
                 identifier: normalizedPhone,
                 otp,
-                type: 'register',
+                type: null,
                 expiresAt: moment().add(1, 'minutes').toDate(),
             }, { transaction });
 
             // await sendOtpWhatsapp(otp, normalizedPhone);
             await transaction.commit();
-            res.status(200).json({ success: true, message: 'OTP berhasil dikirim', phoneNumber: normalizedPhone, otp });
+            return res.status(200).json({ success: true, message: 'OTP berhasil dikirim', phoneNumber: normalizedPhone, otp });
         } catch (err) {
             console.error(err);
 
             await transaction.rollback();
-            res.status(err.status || 500).json({ success: false, message: err.message || 'Gagal request OTP' });
+            return res.status(err.status || 500).json({ success: false, message: err.message || 'Gagal request OTP' });
         }
     };
 
@@ -92,7 +93,7 @@ class UserController {
                 include: {
                     model: db.Roles,
                     as: 'role',
-                    attributes: ['name']
+                    // attributes: ['name']
                 }
             });
             if (!user) throw { status: 400, message: 'User tidak ditemukan' };
@@ -100,19 +101,17 @@ class UserController {
 
             const isProfileComplete = !!(user.name && user.email);
 
-            // const merchants = await db.Merchants.findAll({
-            //     where: { userId: user.id },
-            //     attributes: ['id', 'name']
-            // });
+            const roleName = user.role?.name || 'guest';
+            user.role = roleName;
 
-            // const merchantData = merchants.map(m => ({
-            //     id: m.id,
-            //     name: m.name
-            // }));
+            // const merchants = await db.Merchants.findAll({
+            //     where: { userId: user.id, isActive: true, },
+            //     attributes: ['id']
+            // });
 
             // const merchantIds = merchants.map(m => m.id);
 
-            await userOtp.update({ verifiedAt: new Date() }, { transaction });
+            await userOtp.update({ verifiedAt: new Date(), type: 'login' }, { transaction });
 
             const existingToken = await db.RefreshTokens.findOne({
                 where: {
@@ -126,21 +125,23 @@ class UserController {
                 await existingToken.destroy({ transaction });
             }
 
-            const roleName = user.role?.name || 'guest';
+            const accessToken = await signAccessTokenWithMerchants(user);
+            const refreshToken = await signRefreshTokenWithMerchants(user);
+            // const accessToken = signAccessToken({
+            //     id: user.id,
+            //     phoneNumber: user.phoneNumber,
+            //     role: roleName,
+            //     isProfileComplete,
+            //     merchantIds
+            // });
 
-            const accessToken = signAccessToken({
-                id: user.id,
-                phoneNumber: user.phoneNumber,
-                role: roleName,
-                // merchants: merchantData
-            });
-
-            const refreshToken = signRefreshToken({
-                id: user.id,
-                phoneNumber: user.phoneNumber,
-                role: roleName,
-                // merchants: merchantData
-            });
+            // const refreshToken = signRefreshToken({
+            //     id: user.id,
+            //     phoneNumber: user.phoneNumber,
+            //     role: roleName,
+            //     isProfileComplete,
+            //     merchantIds
+            // });
 
             await db.RefreshTokens.create({
                 userId: user.id,
@@ -149,7 +150,7 @@ class UserController {
             }, { transaction });
 
             await transaction.commit();
-            res.status(200).send({
+            return res.status(200).send({
                 message: 'OTP terverifikasi',
                 isProfileComplete,
                 accessToken,
@@ -158,7 +159,7 @@ class UserController {
         } catch (err) {
             console.error(err);
             await transaction.rollback();
-            res.status(err.status || 500).send({ message: err.message || 'Gagal verifikasi OTP' });
+            return res.status(err.status || 500).send({ message: err.message || 'Gagal verifikasi OTP' });
         }
     }
 
@@ -167,10 +168,14 @@ class UserController {
         try {
             const { name, email, storeName, address, district, city, province, packageId } = req.body;
             const userId = req.user.id
-            // const user = await db.Users.findOne({ where: { phoneNumber } });
+
             const user = await db.Users.findByPk(userId);
 
             if (!user) throw { status: 404, message: 'User tidak ditemukan' };
+
+            // if (!isEmailValid(email)) throw { status: 400, message: "Format email tidak valid" };
+            // const emailOk = await isEmailDeliverable(email);
+            // if (!emailOk) throw { status: 400, message: "Email tidak dapat dikirim (domain tidak valid atau disposable)" };
 
             const role = await db.Roles.findOne({ where: { name: 'merchant' } });
             if (!role) throw { status: 404, message: 'Role merchant tidak ditemukan' };
@@ -219,17 +224,21 @@ class UserController {
                 include: { model: db.Roles, as: 'role' }
             });
 
-            const accessToken = signAccessToken({
-                id: updatedUser.id,
-                phoneNumber: updatedUser.phoneNumber,
-                role: updatedUser.role,
-            });
+            // const accessToken = signAccessToken({
+            //     id: updatedUser.id,
+            //     phoneNumber: updatedUser.phoneNumber,
+            //     role: updatedUser.role,
+            //     merchantIds: [merchant.id]
+            // });
 
-            const refreshToken = signRefreshToken({
-                id: user.id,
-                phoneNumber: user.phoneNumber,
-                role: updatedUser.role,
-            });
+            // const refreshToken = signRefreshToken({
+            //     id: user.id,
+            //     phoneNumber: user.phoneNumber,
+            //     role: updatedUser.role,
+            //     merchantIds: [merchant.id]
+            // });
+            const accessToken = await signAccessTokenWithMerchants(updatedUser);
+            const refreshToken = await signRefreshTokenWithMerchants(updatedUser);
 
             await db.RefreshTokens.create({
                 userId: user.id,
@@ -238,7 +247,7 @@ class UserController {
             }, { transaction });
 
             await transaction.commit();
-            res.status(200).send({
+            return res.status(200).send({
                 message: 'Registrasi merchant berhasil',
                 accessToken,
                 refreshToken
@@ -246,9 +255,67 @@ class UserController {
         } catch (err) {
             await transaction.rollback();
             console.error(err);
-            res.status(err.status || 500).send({ message: err.message || 'Gagal verifikasi OTP' });
+            return res.status(err.status || 500).send({ message: err.message || 'Gagal verifikasi OTP' });
         }
     }
+
+    static async getUserProfile(req, res) {
+        try {
+            const userId = req.user.id;
+
+            if (!userId) {
+                return res.status(401).json({ message: "Unauthorized: ID user tidak ditemukan" });
+            }
+
+            const user = await db.Users.findOne({
+                where: { id: userId },
+                attributes: ['id', 'name', 'email', 'phoneNumber'],
+                include: [
+                    {
+                        model: db.Roles,
+                        as: 'role',
+                        attributes: ['id', 'name']
+                    },
+                    {
+                        model: db.Merchants,
+                        as: 'merchants',
+                        attributes: ['id', 'storeName', 'storeUrl', 'isActive'],
+                        include: [
+                            {
+                                model: db.MerchantProfiles,
+                                as: 'merchantProfile',
+                                attributes: ['id', 'logo', 'bannerUrl', 'address', 'phone', 'district', 'city', 'province']
+                            },
+                            {
+                                model: db.MerchantSubscriptions,
+                                as: 'subscription',
+                                where: { isActive: true },
+                                required: false,
+                                attributes: ['startDate', 'endDate', 'isActive'],
+                                include: [
+                                    {
+                                        model: db.Packages,
+                                        as: 'package',
+                                        attributes: ['id', 'name', 'price', 'durationInDays']
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            });
+
+            if (!user) {
+                return res.status(404).json({ message: "User tidak ditemukan" });
+            }
+
+            return res.status(200).json({ data: user });
+        } catch (error) {
+            console.error(error);
+            return res.status(500).json({ message: "Gagal mengambil data profil user", error: error.message });
+        }
+    }
+
 }
 
 

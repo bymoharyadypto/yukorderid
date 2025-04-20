@@ -11,6 +11,8 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      Merchants.hasOne(models.MerchantSubscriptions, { as: 'subscription', foreignKey: 'merchantId' })
+      Merchants.hasOne(models.MerchantProfiles, { as: 'merchantProfile', foreignKey: 'merchantId' })
     }
   }
   Merchants.init({

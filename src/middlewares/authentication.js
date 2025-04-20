@@ -36,11 +36,13 @@ async function verifyToken(req, res, next) {
         if (!user) {
             return res.status(404).json({ message: 'User tidak ditemukan' });
         }
-
+        // req.user = decoded;
         req.user = {
             id: user.id,
             phoneNumber: user.phoneNumber,
             role: decoded.role,
+            isVerified: user.isVerified,
+            merchantIds: decoded.merchantIds || []
         };
 
         next();
@@ -80,5 +82,35 @@ async function canRegisterMerchant(req, res, next) {
     }
 }
 
+async function validateUserMerchant(req, res, next) {
+    try {
+        const userId = req.user.id;
+        let merchantIds = req.user.merchantIds;
 
-module.exports = { authentication, verifyToken, canRegisterMerchant };
+        if (!merchantIds || merchantIds.length === 0) {
+            const merchants = await db.Merchants.findAll({
+                where: {
+                    userId,
+                    isActive: true,
+                },
+                attributes: ['id']
+            });
+
+            if (merchants.length === 0) {
+                return res.status(404).json({ message: 'Merchant tidak ditemukan' });
+            }
+
+            merchantIds = merchants.map(m => m.id);
+        }
+
+        req.merchantIds = merchantIds;
+
+        next();
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: 'Gagal memvalidasi merchant', error: err.message });
+    }
+}
+
+
+module.exports = { authentication, verifyToken, canRegisterMerchant, validateUserMerchant };

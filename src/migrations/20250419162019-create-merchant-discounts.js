@@ -2,7 +2,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('MerchantProducts', {
+    await queryInterface.createTable('MerchantDiscounts', {
       id: {
         allowNull: false,
         autoIncrement: true,
@@ -10,28 +10,48 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       merchantId: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
+        references: {
+          model: 'Merchants',
+          key: 'id'
+        },
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
       },
-      name: {
-        type: Sequelize.STRING
+      code: {
+        type: Sequelize.STRING,
+        allowNull: false,
+        unique: true
       },
       description: {
         type: Sequelize.TEXT
       },
-      price: {
+      discountType: {
+        type: Sequelize.STRING
+      },
+      discountValue: {
+        type: Sequelize.FLOAT
+      },
+      budgetPerTransaction: {
         type: Sequelize.INTEGER
       },
-      crossedPrice: {
-        type: Sequelize.INTEGER
-      },
-      stock: {
-        type: Sequelize.INTEGER
-      },
-      isPreOrder: {
+      isAllProducts: {
         type: Sequelize.BOOLEAN
       },
-      preOrderDays: {
+      isAllPayments: {
+        type: Sequelize.BOOLEAN
+      },
+      quota: {
         type: Sequelize.INTEGER
+      },
+      paymentType: {
+        type: Sequelize.STRING
+      },
+      startDate: {
+        type: Sequelize.DATE
+      },
+      endDate: {
+        type: Sequelize.DATE
       },
       isActive: {
         type: Sequelize.BOOLEAN
@@ -49,6 +69,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('MerchantProducts');
+    await queryInterface.dropTable('MerchantDiscounts');
   }
 };
