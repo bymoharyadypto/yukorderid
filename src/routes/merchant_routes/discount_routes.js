@@ -1,5 +1,5 @@
 const router = require("express").Router({ mergeParams: true });
-const DiscountController = require("../../controllers/merchant_controller/discount_controller")
+const DiscountController = require("../../controllers/merchant_controllers/discount_controller")
 
 router.get("/payment-methods", DiscountController.getPaymentMethods)
 router.post("/", DiscountController.createDiscount)

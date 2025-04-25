@@ -2,22 +2,22 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('MerchantDiscountPaymentMethods', {
+    await queryInterface.createTable('MerchantOperatingHourSlots', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      discountId: {
+      merchantOperatingHourId: {
         type: Sequelize.INTEGER,
-        onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
-      paymentMethodId: {
-        type: Sequelize.INTEGER,
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE'
+      openTime: {
+        type: Sequelize.TIME
+      },
+      closeTime: {
+        type: Sequelize.TIME
       },
       createdAt: {
         allowNull: false,
@@ -32,6 +32,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('MerchantDiscountPaymentMethods');
+    await queryInterface.dropTable('MerchantOperatingHourSlots');
   }
 };

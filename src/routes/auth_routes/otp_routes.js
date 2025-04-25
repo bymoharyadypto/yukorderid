@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const UserController = require("../../controllers/merchant_controller/user_controller")
+const UserController = require("../../controllers/merchant_controllers/user_controller")
 
 router.post("/request", UserController.requestOtp);
 router.post("/verify", UserController.verifyOtp);

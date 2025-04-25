@@ -10,7 +10,8 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       merchantProductVariantId: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
+        onDelete: 'CASCADE'
       },
       value: {
         type: Sequelize.STRING

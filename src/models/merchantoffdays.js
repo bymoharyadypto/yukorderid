@@ -3,7 +3,7 @@ const {
   Model
 } = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class MerchantProfiles extends Model {
+  class MerchantOffDays extends Model {
     /**
      * Helper method for defining associations.
      * This method is not a part of Sequelize lifecycle.
@@ -11,21 +11,19 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      MerchantOffDays.belongsTo(models.Merchants, {
+        foreignKey: 'merchantId',
+        as: 'merchant'
+      });
     }
   }
-  MerchantProfiles.init({
+  MerchantOffDays.init({
     merchantId: DataTypes.INTEGER,
-    subText: DataTypes.STRING,
-    logo: DataTypes.STRING,
-    bannerUrl: DataTypes.STRING,
-    address: DataTypes.TEXT,
-    district: DataTypes.STRING,
-    city: DataTypes.STRING,
-    province: DataTypes.STRING,
-    phone: DataTypes.STRING
+    date: DataTypes.DATEONLY,
+    description: DataTypes.STRING
   }, {
     sequelize,
-    modelName: 'MerchantProfiles',
+    modelName: 'MerchantOffDays',
   });
-  return MerchantProfiles;
+  return MerchantOffDays;
 };

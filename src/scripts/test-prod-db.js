@@ -11,9 +11,9 @@ const connection = mysql.createConnection({
 
 connection.connect((err) => {
     if (err) {
-        console.error('❌ Gagal konek ke DB production:', err.message);
+        console.error('Gagal konek ke DB production:', err.message);
         process.exit(1);
     }
-    console.log('✅ Berhasil konek ke DB production!');
+    console.log('Berhasil konek ke DB production!');
     connection.end();
 });

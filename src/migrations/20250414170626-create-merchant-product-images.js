@@ -10,7 +10,9 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       merchantProductId: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
       },
       imageUrl: {
         type: Sequelize.STRING

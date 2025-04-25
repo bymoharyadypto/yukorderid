@@ -10,10 +10,12 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       merchantProductId: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
+        onDelete: 'CASCADE'
       },
       categoryId: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
+        onDelete: 'CASCADE'
       },
       createdAt: {
         allowNull: false,

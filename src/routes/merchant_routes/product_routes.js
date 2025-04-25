@@ -1,5 +1,5 @@
 const router = require("express").Router({ mergeParams: true });
-const ProductController = require("../../controllers/merchant_controller/product_controller")
+const ProductController = require("../../controllers/merchant_controllers/product_controller")
 const checkMerchantFeature = require('../../middlewares/checkMerchantFeature');
 const checkMerchantQuota = require('../../middlewares/checkMerchantQuota');
 

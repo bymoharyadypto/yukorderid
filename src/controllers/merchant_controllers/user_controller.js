@@ -284,7 +284,7 @@ class UserController {
                             {
                                 model: db.MerchantProfiles,
                                 as: 'merchantProfile',
-                                attributes: ['id', 'logo', 'bannerUrl', 'address', 'phone', 'district', 'city', 'province']
+                                attributes: ['id', "subText", 'logo', 'bannerUrl', 'address', 'phone', 'district', 'city', 'province']
                             },
                             {
                                 model: db.MerchantSubscriptions,

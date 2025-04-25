@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const MerchantController = require("../../controllers/merchant_controller/merchant_controller")
+const MerchantController = require("../../controllers/merchant_controllers/merchant_controller")
 const productRoutes = require("./product_routes")
 const discountRoutes = require("./discount_routes")
 

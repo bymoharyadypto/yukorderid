@@ -2,36 +2,37 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('MerchantDiscountPaymentMethods', {
+    await queryInterface.createTable('MerchantOperatingHours', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      discountId: {
+      merchantId: {
         type: Sequelize.INTEGER,
-        onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
-      paymentMethodId: {
-        type: Sequelize.INTEGER,
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE'
+      day: {
+        type: Sequelize.STRING
+      },
+      isOpen: {
+        type: Sequelize.BOOLEAN
+      },
+      is24Hours: {
+        type: Sequelize.BOOLEAN
       },
       createdAt: {
         allowNull: false,
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+        type: Sequelize.DATE
       },
       updatedAt: {
         allowNull: false,
-        type: Sequelize.DATE,
-        defaultValue: Sequelize.literal('CURRENT_TIMESTAMP')
+        type: Sequelize.DATE
       }
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('MerchantDiscountPaymentMethods');
+    await queryInterface.dropTable('MerchantOperatingHours');
   }
 };

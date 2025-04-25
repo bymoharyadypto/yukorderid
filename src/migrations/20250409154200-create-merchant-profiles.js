@@ -14,6 +14,9 @@ module.exports = {
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
+      subText: {
+        type: Sequelize.STRING
+      },
       logo: {
         type: Sequelize.STRING
       },
