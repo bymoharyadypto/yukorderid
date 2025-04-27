@@ -259,6 +259,93 @@ class UserController {
         }
     }
 
+    static async registerCustomer(req, res) {
+        const transaction = await sequelize.transaction();
+        try {
+            const { name, email, phoneNumber, password, repeatPassword, address, city, province, postalCode } = req.body;
+
+            if (!name || !email || !phoneNumber || !password || !repeatPassword) {
+                throw { status: 400, message: "Semua field wajib diisi" };
+            }
+
+            if (password !== repeatPassword) {
+                throw { status: 400, message: "Password dan Repeat Password tidak cocok" };
+            }
+
+            const role = await db.Roles.findOne({ where: { name: 'customer' } });
+            if (!role) throw { status: 404, message: 'Role customer tidak ditemukan' };
+
+            const existingUser = await db.Users.findOne({
+                where: {
+                    [Op.or]: [{ email }, { phoneNumber }]
+                }
+            });
+
+            if (existingUser) {
+                throw { status: 400, message: "Email atau Phone Number sudah terdaftar" };
+            }
+
+            const hashedPassword = await bcrypt.hash(password, 10);
+
+            const user = await db.Users.create({
+                name,
+                email,
+                phoneNumber,
+                password: hashedPassword,
+                isVerified: true,
+                roleId: role.id
+            }, { transaction });
+
+            await db.CustomerProfiles.create({
+                userId: user.id,
+                address,
+                city,
+                province,
+                postalCode,
+                image: null
+            }, { transaction });
+
+            const existingToken = await db.RefreshTokens.findOne({
+                where: {
+                    userId: user.id,
+                    expiresAt: { [Op.gt]: new Date() }
+                },
+                order: [['createdAt', 'DESC']]
+            });
+
+            if (existingToken) {
+                await existingToken.destroy({ transaction });
+            }
+
+            // Generate Token
+            const updatedUser = await db.Users.findByPk(user.id, {
+                include: { model: db.Roles, as: 'role' }
+            });
+
+            const accessToken = await signAccessTokenWithMerchants(updatedUser);
+            const refreshToken = await signRefreshTokenWithMerchants(updatedUser);
+
+            await db.RefreshTokens.create({
+                userId: user.id,
+                token: refreshToken,
+                expiresAt: dayjs().add(7, 'days').toDate()
+            }, { transaction });
+
+            await transaction.commit();
+            return res.status(201).send({
+                message: 'Registrasi customer berhasil',
+                accessToken,
+                refreshToken
+            });
+
+        } catch (err) {
+            await transaction.rollback();
+            console.error(err);
+            return res.status(err.status || 500).send({ message: err.message || 'Gagal registrasi customer' });
+        }
+    }
+
+
     static async getUserProfile(req, res) {
         try {
             const userId = req.user.id;
