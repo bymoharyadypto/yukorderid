@@ -5,6 +5,7 @@ const discountRoutes = require("./discount_routes")
 
 router.get("/", MerchantController.getUserMerchants)
 router.get("/:merchantId", MerchantController.getUserMerchant)
+router.put("/:merchantId", MerchantController.updateMerchantWithOperatingHours)
 router.use("/:merchantId/products", productRoutes)
 router.use('/:merchantId/discounts', discountRoutes);
 

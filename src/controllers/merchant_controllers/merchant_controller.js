@@ -90,6 +90,20 @@ class MerchantController {
                                 attributes: ['id', 'name', 'price', 'durationInDays', 'description']
                             }
                         ]
+                    },
+                    {
+                        model: db.MerchantOperatingHours,
+                        as: 'operatingHours',
+                        attributes: ['id', 'day', 'isOpen', 'is24Hours'],
+                        order: [['id', 'ASC']],
+                        include:
+                        {
+                            model: db.MerchantOperatingHourSlots,
+                            attributes: ["id", "openTime", "closeTime"],
+                            as: 'slots',
+
+                        }
+
                     }
                 ]
             });
@@ -107,7 +121,7 @@ class MerchantController {
     static async updateMerchantWithOperatingHours(req, res) {
         const transaction = await db.sequelize.transaction();
         try {
-            const merchantId = req.params.id;
+            const merchantId = req.params.merchantId;
             const {
                 storeName,
                 storeUrl,

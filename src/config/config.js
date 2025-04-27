@@ -1,28 +1,27 @@
-require('dotenv').config();
+function requiredEnv(key) {
+    console.log(process.env, 'process.env');
+
+    if (!process.env[key]) {
+        throw new Error(`Missing required env: ${key}`);
+    }
+    return process.env[key];
+}
 
 module.exports = {
     development: {
-        username: process.env.DB_DEV_USERNAME,
-        password: process.env.DB_DEV_PASSWORD,
-        database: process.env.DB_DEV_NAME,
-        host: process.env.DB_DEV_HOST,
+        username: requiredEnv('DB_DEV_USERNAME'),
+        password: requiredEnv('DB_DEV_PASSWORD'),
+        database: requiredEnv('DB_DEV_NAME'),
+        host: requiredEnv('DB_DEV_HOST'),
         dialect: "postgres",
-        port: process.env.DB_DEV_PORT
-    },
-    test: {
-        username: process.env.DB_DEV_USERNAME,
-        password: process.env.DB_DEV_PASSWORD,
-        database: process.env.DB_DEV_NAME + "_test",
-        host: process.env.DB_DEV_HOST,
-        dialect: "postgres",
-        port: process.env.DB_DEV_PORT
+        port: Number(requiredEnv('DB_DEV_PORT'))
     },
     production: {
-        username: process.env.DB_PROD_USERNAME,
-        password: process.env.DB_PROD_PASSWORD,
-        database: process.env.DB_PROD_NAME,
-        host: process.env.DB_PROD_HOST,
+        username: requiredEnv('DB_PROD_USERNAME'),
+        password: requiredEnv('DB_PROD_PASSWORD'),
+        database: requiredEnv('DB_PROD_NAME'),
+        host: requiredEnv('DB_PROD_HOST'),
         dialect: "mysql",
-        port: process.env.DB_PROD_PORT
+        port: Number(requiredEnv('DB_PROD_PORT'))
     }
 };

@@ -13,6 +13,7 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       Merchants.hasOne(models.MerchantSubscriptions, { as: 'subscription', foreignKey: 'merchantId' })
       Merchants.hasOne(models.MerchantProfiles, { as: 'merchantProfile', foreignKey: 'merchantId' })
+      Merchants.hasMany(models.MerchantOperatingHours, { as: 'operatingHours', foreignKey: 'merchantId' })
     }
   }
   Merchants.init({
