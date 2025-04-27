@@ -1,5 +1,13 @@
+const path = require("path");
+
+const node_env = process.env.NODE_ENV || "development";
+
+require("dotenv").config({
+    path: path.resolve(__dirname, `../.env.${node_env}`),
+});
+
 function requiredEnv(key) {
-    console.log(process.env, 'process.env');
+    // console.log(process.env, 'process.env');
 
     if (!process.env[key]) {
         throw new Error(`Missing required env: ${key}`);
