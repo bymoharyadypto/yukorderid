@@ -5,7 +5,7 @@ const dayjs = require('dayjs')
 const { normalizePhone, isValidMobilePhoneNumber, generateOtpCode } = require('../../utils/otpUtils');
 const { sendOtpWhatsapp } = require('../../utils/otpUtils');
 const { signAccessToken, signRefreshToken } = require('../../helpers/jwt');
-const { signAccessTokenWithMerchants, signRefreshTokenWithMerchants } = require('../../helpers/tokenHelper');
+const { signAccessTokenWithMerchants, signRefreshTokenWithMerchants, signAccessTokenForCustomer, signRefreshTokenForCustomer } = require('../../helpers/tokenHelper');
 
 class UserController {
     static async requestOtp(req, res) {
@@ -167,11 +167,19 @@ class UserController {
         const transaction = await db.sequelize.transaction();
         try {
             const { name, email, storeName, address, district, city, province, packageId } = req.body;
-            const userId = req.user.id
 
-            const user = await db.Users.findByPk(userId);
+            const existingUser = await db.Users.findOne({
+                where: {
+                    [Op.or]: [{ email }, { phoneNumber: req.user.phoneNumber }]
+                }
+            });
 
-            if (!user) throw { status: 404, message: 'User tidak ditemukan' };
+            if (existingUser && existingUser.isVerified) {
+                throw { status: 400, message: "Email atau Nomor Telepon sudah terdaftar dan terverifikasi" };
+            }
+            // const user = await db.Users.findByPk(userId);
+
+            // if (!user) throw { status: 404, message: 'User tidak ditemukan' };
 
             // if (!isEmailValid(email)) throw { status: 400, message: "Format email tidak valid" };
             // const emailOk = await isEmailDeliverable(email);
@@ -180,7 +188,7 @@ class UserController {
             const role = await db.Roles.findOne({ where: { name: 'merchant' } });
             if (!role) throw { status: 404, message: 'Role merchant tidak ditemukan' };
 
-            await user.update({
+            await existingUser.update({
                 name,
                 email,
                 isVerified: true,
@@ -188,7 +196,7 @@ class UserController {
             }, { transaction });
 
             const merchant = await db.Merchants.create({
-                userId: user.id,
+                userId: existingUser.id,
                 storeName,
                 isActive: true,
             }, { transaction });
@@ -210,7 +218,7 @@ class UserController {
 
             const existingToken = await db.RefreshTokens.findOne({
                 where: {
-                    userId: user.id,
+                    userId: existingUser.id,
                     expiresAt: { [Op.gt]: new Date() }
                 },
                 order: [['createdAt', 'DESC']]
@@ -220,7 +228,7 @@ class UserController {
                 await existingToken.destroy({ transaction });
             }
 
-            const updatedUser = await db.Users.findByPk(user.id, {
+            const updatedUser = await db.Users.findByPk(existingUser.id, {
                 include: { model: db.Roles, as: 'role' }
             });
 
@@ -241,13 +249,13 @@ class UserController {
             const refreshToken = await signRefreshTokenWithMerchants(updatedUser);
 
             await db.RefreshTokens.create({
-                userId: user.id,
+                userId: existingUser.id,
                 token: refreshToken,
                 expiresAt: dayjs().add(7, 'days').toDate()
             }, { transaction });
 
             await transaction.commit();
-            return res.status(200).send({
+            return res.status(201).send({
                 message: 'Registrasi merchant berhasil',
                 accessToken,
                 refreshToken
@@ -259,17 +267,13 @@ class UserController {
         }
     }
 
-    static async registerCustomer(req, res) {
-        const transaction = await sequelize.transaction();
+    static async registerUserCustomer(req, res) {
+        const transaction = await db.sequelize.transaction();
         try {
-            const { name, email, phoneNumber, password, repeatPassword, address, city, province, postalCode } = req.body;
+            const { name, email, address, city, province, postalCode } = req.body;
 
-            if (!name || !email || !phoneNumber || !password || !repeatPassword) {
-                throw { status: 400, message: "Semua field wajib diisi" };
-            }
-
-            if (password !== repeatPassword) {
-                throw { status: 400, message: "Password dan Repeat Password tidak cocok" };
+            if (!name || !email) {
+                throw { status: 400, message: "Nama dan Email wajib diisi" };
             }
 
             const role = await db.Roles.findOne({ where: { name: 'customer' } });
@@ -277,27 +281,32 @@ class UserController {
 
             const existingUser = await db.Users.findOne({
                 where: {
-                    [Op.or]: [{ email }, { phoneNumber }]
+                    [Op.or]: [{ email }, { phoneNumber: req.user.phoneNumber }]
                 }
             });
 
-            if (existingUser) {
-                throw { status: 400, message: "Email atau Phone Number sudah terdaftar" };
+            if (existingUser && existingUser.isVerified) {
+                throw { status: 400, message: "Email atau Nomor Telepon sudah terdaftar dan terverifikasi" };
             }
 
-            const hashedPassword = await bcrypt.hash(password, 10);
+            // const user = await db.Users.create({
+            //     name,
+            //     email,
+            //     isVerified: true,
+            //     roleId: role.id
+            // }, { transaction });
 
-            const user = await db.Users.create({
+
+            await existingUser.update({
                 name,
                 email,
-                phoneNumber,
-                password: hashedPassword,
                 isVerified: true,
-                roleId: role.id
+                roleId: role.id,
             }, { transaction });
 
+
             await db.CustomerProfiles.create({
-                userId: user.id,
+                userId: existingUser.id,
                 address,
                 city,
                 province,
@@ -307,7 +316,7 @@ class UserController {
 
             const existingToken = await db.RefreshTokens.findOne({
                 where: {
-                    userId: user.id,
+                    userId: existingUser.id,
                     expiresAt: { [Op.gt]: new Date() }
                 },
                 order: [['createdAt', 'DESC']]
@@ -317,16 +326,18 @@ class UserController {
                 await existingToken.destroy({ transaction });
             }
 
-            // Generate Token
-            const updatedUser = await db.Users.findByPk(user.id, {
+            const updatedUser = await db.Users.findByPk(existingUser.id, {
                 include: { model: db.Roles, as: 'role' }
             });
 
-            const accessToken = await signAccessTokenWithMerchants(updatedUser);
-            const refreshToken = await signRefreshTokenWithMerchants(updatedUser);
+            console.log(updatedUser);
+
+
+            const accessToken = await signAccessTokenForCustomer(updatedUser);
+            const refreshToken = await signRefreshTokenForCustomer(updatedUser);
 
             await db.RefreshTokens.create({
-                userId: user.id,
+                userId: existingUser.id,
                 token: refreshToken,
                 expiresAt: dayjs().add(7, 'days').toDate()
             }, { transaction });

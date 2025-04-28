@@ -21,13 +21,13 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         isEmail: true,
         unique: {
-          msg: "Email already registered",
+          msg: "Email sudah terdaftar",
         },
       },
       phoneNumber: {
         type: DataTypes.STRING,
         unique: {
-          msg: "Phone number already registered",
+          msg: "Nomor telepon sudah terdaftar",
         },
       },
       password: {

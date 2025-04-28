@@ -1,7 +1,7 @@
 const router = require("express").Router();
 const { verifyToken, canRegisterMerchant, validateUserMerchant } = require("../../middlewares/authentication");
 const PackageController = require("../../controllers/merchant_controllers/package_controller");
-const UserController = require("../../controllers/merchant_controllers/user_controller")
+const UserController = require("../../controllers/user_controllers/user_controller")
 const merchantRoutes = require("./merchant_routes")
 
 router.get("/packages", PackageController.getAllPackages);

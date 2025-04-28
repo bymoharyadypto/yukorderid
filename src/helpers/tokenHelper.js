@@ -31,8 +31,30 @@ async function signRefreshTokenWithMerchants(user, options = {}) {
     });
 }
 
+async function signAccessTokenForCustomer(user, options = {}) {
+    console.log("signAccessTokenForCustomer", user, options);
+
+    return signAccessToken({
+        id: user.id,
+        phoneNumber: user.phoneNumber,
+        role: user.role,
+        isProfileComplete: options.isProfileComplete || false,
+    });
+}
+
+async function signRefreshTokenForCustomer(user, options = {}) {
+    return signRefreshToken({
+        id: user.id,
+        phoneNumber: user.phoneNumber,
+        role: user.role,
+        isProfileComplete: options.isProfileComplete || false,
+    });
+}
+
 module.exports = {
     getMerchantIdsByUser,
     signAccessTokenWithMerchants,
-    signRefreshTokenWithMerchants
+    signRefreshTokenWithMerchants,
+    signAccessTokenForCustomer,
+    signRefreshTokenForCustomer
 };
