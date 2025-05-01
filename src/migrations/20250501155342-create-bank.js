@@ -2,30 +2,24 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Merchants', {
+    await queryInterface.createTable('Banks', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      userId: {
-        type: Sequelize.INTEGER,
-        onUpdate: 'CASCADE',
-        onDelete: 'CASCADE'
+      code: {
+        type: Sequelize.STRING
       },
-      storeName: {
-        type: Sequelize.STRING,
+      name: {
+        type: Sequelize.STRING
       },
-      subdomain: {
-        type: Sequelize.STRING,
-      },
-      storeUrl: {
-        type: Sequelize.STRING,
+      logoUrl: {
+        type: Sequelize.STRING
       },
       isActive: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: true
+        type: Sequelize.BOOLEAN
       },
       createdAt: {
         allowNull: false,
@@ -40,6 +34,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Merchants');
+    await queryInterface.dropTable('Banks');
   }
 };

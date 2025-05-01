@@ -14,12 +14,35 @@ module.exports = (sequelize, DataTypes) => {
       Merchants.hasOne(models.MerchantSubscriptions, { as: 'subscription', foreignKey: 'merchantId' })
       Merchants.hasOne(models.MerchantProfiles, { as: 'merchantProfile', foreignKey: 'merchantId' })
       Merchants.hasMany(models.MerchantOperatingHours, { as: 'operatingHours', foreignKey: 'merchantId' })
+      Merchants.hasMany(models.MerchantBankAccounts, { as: 'bankAccounts', foreignKey: 'merchantId' })
+      Merchants.hasMany(models.MerchantDiscounts, { as: 'discounts', foreignKey: 'merchantId' })
     }
   }
   Merchants.init({
     userId: DataTypes.INTEGER,
-    storeName: DataTypes.STRING,
-    storeUrl: DataTypes.STRING,
+    storeName: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
+    subdomain: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+      validate: {
+        isLowercase: true,
+        isAlphanumeric: true,
+      },
+    },
+    storeUrl: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+      get() {
+        const baseUrl = 'https://yukorder.id';
+        return `${baseUrl}/${this.getDataValue('subdomain')}`;
+      },
+    },
     isActive: DataTypes.BOOLEAN
   }, {
     sequelize,

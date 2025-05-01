@@ -2,30 +2,40 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Merchants', {
+    await queryInterface.createTable('OrderItems', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      userId: {
+      orderId: {
         type: Sequelize.INTEGER,
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
-      storeName: {
-        type: Sequelize.STRING,
+      merchantProductId: {
+        type: Sequelize.INTEGER,
       },
-      subdomain: {
-        type: Sequelize.STRING,
+      variantId: {
+        type: Sequelize.INTEGER
       },
-      storeUrl: {
-        type: Sequelize.STRING,
+      quantity: {
+        type: Sequelize.INTEGER
       },
-      isActive: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: true
+      price: {
+        type: Sequelize.INTEGER
+      },
+      total: {
+        type: Sequelize.INTEGER
+      },
+      merchantDiscountId: {
+        type: Sequelize.INTEGER,
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL'
+      },
+      isPreOrder: {
+        type: Sequelize.BOOLEAN
       },
       createdAt: {
         allowNull: false,
@@ -40,6 +50,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Merchants');
+    await queryInterface.dropTable('OrderItems');
   }
 };

@@ -10,7 +10,12 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       userId: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL'
+      },
+      transactionNumber: {
+        type: Sequelize.STRING
       },
       subtotalAmount: {
         type: Sequelize.INTEGER
@@ -25,13 +30,15 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       status: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING //('Pending', 'Paid', 'Shipped', 'Completed', 'Cancelled')
       },
       paymentStatus: {
-        type: Sequelize.STRING
+        type: Sequelize.STRING //('Pending', 'Paid', 'Failed')
       },
       merchantDiscountId: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
+        onUpdate: 'CASCADE',
+        onDelete: 'SET NULL'
       },
       isMerchantDiscount: {
         type: Sequelize.BOOLEAN

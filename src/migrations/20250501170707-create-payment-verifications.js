@@ -2,30 +2,35 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.createTable('Merchants', {
+    await queryInterface.createTable('PaymentVerifications', {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      userId: {
+      paymentId: {
         type: Sequelize.INTEGER,
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
-      storeName: {
-        type: Sequelize.STRING,
+      transferProofUrl: {
+        type: Sequelize.STRING
       },
-      subdomain: {
-        type: Sequelize.STRING,
+      uploadedAt: {
+        type: Sequelize.DATE
       },
-      storeUrl: {
-        type: Sequelize.STRING,
+      verifiedAt: {
+        type: Sequelize.DATE
       },
-      isActive: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: true
+      verifiedBy: {
+        type: Sequelize.INTEGER
+      },
+      status: {
+        type: Sequelize.STRING //('Pending', 'Accepted', 'Rejected')
+      },
+      notes: {
+        type: Sequelize.TEXT
       },
       createdAt: {
         allowNull: false,
@@ -40,6 +45,6 @@ module.exports = {
     });
   },
   async down(queryInterface, Sequelize) {
-    await queryInterface.dropTable('Merchants');
+    await queryInterface.dropTable('PaymentVerifications');
   }
 };

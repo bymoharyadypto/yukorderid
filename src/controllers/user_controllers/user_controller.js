@@ -1,7 +1,8 @@
 const db = require('../../models');
 const moment = require('moment');
 const { Op } = require('sequelize');
-const dayjs = require('dayjs')
+const dayjs = require('dayjs');
+const slugify = require('slugify');
 const { normalizePhone, isValidMobilePhoneNumber, generateOtpCode } = require('../../utils/otpUtils');
 const { sendOtpWhatsapp } = require('../../utils/otpUtils');
 const { signAccessToken, signRefreshToken } = require('../../helpers/jwt');
@@ -195,9 +196,17 @@ class UserController {
                 roleId: role.id,
             }, { transaction });
 
+            const subdomain = slugify(storeName, { lower: true, strict: true });
+
+            const existingMerchant = await db.Merchants.findOne({ where: { subdomain } });
+            if (existingMerchant) {
+                throw { status: 400, message: 'Subdomain sudah digunakan, pilih nama toko lain.' };
+            }
+
             const merchant = await db.Merchants.create({
                 userId: existingUser.id,
                 storeName,
+                subdomain,
                 isActive: true,
             }, { transaction });
 
