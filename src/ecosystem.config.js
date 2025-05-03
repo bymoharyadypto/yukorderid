@@ -1,6 +1,6 @@
 module.exports = {
     apps: [{
-        name: "investor_app",
+        name: "yukorderid_app",
         script: "./bin/www.js",
         exec_mode: "cluster",
         env_production: {

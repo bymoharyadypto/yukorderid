@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
   }
   OrderStatusHistories.init({
     orderId: DataTypes.INTEGER,
-    status: DataTypes.STRING, //('Pending', 'Paid', 'Processing', 'Shipped', 'Delivered', 'Completed', 'Cancelled', 'Returned')
+    status: DataTypes.STRING, //('Pending', 'Paid', 'Processing', 'Shipped', 'Delivered', 'Completed', 'Cancelled', 'Returned', 'Expired', 'Refunded', 'Failed')
     changeAt: DataTypes.DATE,
     notes: DataTypes.TEXT
   }, {

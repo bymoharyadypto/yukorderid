@@ -167,7 +167,7 @@ class UserController {
     static async registerUserMerchant(req, res) {
         const transaction = await db.sequelize.transaction();
         try {
-            const { name, email, storeName, address, district, city, province, packageId } = req.body;
+            const { name, email, storeName, address, district, city, province, packageId, paymentMethodId, transferProofUrl, notes } = req.body;
 
             const existingUser = await db.Users.findOne({
                 where: {
@@ -218,12 +218,60 @@ class UserController {
                 province,
             }, { transaction });
 
+            const selectedPackage = await db.MerchantPackages.findByPk(packageId);
+
+            if (!selectedPackage) {
+                throw { status: 404, message: 'Paket tidak ditemukan' };
+            }
+
             await db.MerchantSubscriptions.create({
                 merchantId: merchant.id,
                 packageId,
                 isActive: true,
             }, { transaction });
 
+
+            const order = await db.Orders.create({
+                userId: existingUser.id,
+                totalAmount: selectedPackage.price,
+                status: 'Completed',
+                userType: 'Merchant',
+                orderType: 'Subscription',
+                paymentStatus: 'Paid',
+            }, { transaction });
+
+            await db.OrderItems.create({
+                orderId: order.id,
+                productId: selectedPackage.id,
+                quantity: 1,
+                total: selectedPackage.price
+            }, { transaction });
+
+
+            const paymentMethod = await db.PaymentMethods.findOne({
+                where: { id: paymentMethodId, isActive: true },
+            });
+
+            if (!paymentMethod) throw { status: 404, message: 'Metode pembayaran manual tidak ditemukan' };
+
+            const payment = await db.Payments.create({
+                orderId: order.id,
+                merchantId: merchant.id,
+                paymentMethodId: paymentMethod.id,
+                amount: selectedPackage.price,
+                status: 'Paid',
+                paidAt: new Date(),
+            }, { transaction });
+
+            await db.PaymentVerifications.create({
+                paymentId: payment.id,
+                transferProofUrl,
+                uploadedAt: new Date(),
+                verifiedAt: new Date(),
+                verifiedBy: null,
+                notes: notes ?? null,
+                status: 'Accepted',
+            }, { transaction });
 
             const existingToken = await db.RefreshTokens.findOne({
                 where: {
@@ -401,7 +449,7 @@ class UserController {
                                 attributes: ['startDate', 'endDate', 'isActive'],
                                 include: [
                                     {
-                                        model: db.Packages,
+                                        model: db.MerchantPackages,
                                         as: 'package',
                                         attributes: ['id', 'name', 'price', 'durationInDays']
                                     }

@@ -28,16 +28,16 @@ class MerchantController {
                         attributes: ['id', 'startDate', 'endDate', 'isActive', 'expiredAt'],
                         include: [
                             {
-                                model: db.Packages,
+                                model: db.MerchantPackages,
                                 as: 'package',
                                 attributes: ['id', 'name', 'price', 'durationInDays', 'description'],
                                 include: [
                                     {
-                                        model: db.Features,
+                                        model: db.MerchantFeatures,
                                         as: 'features',
                                         attributes: ['id', 'name', 'description'],
                                         through: {
-                                            model: db.PackageFeatures,
+                                            model: db.MerchantPackageFeatures,
                                             attributes: ['defaultLimit'],
                                             as: 'packages',
                                         },
@@ -56,12 +56,13 @@ class MerchantController {
             }
 
             return res.status(200).json({
+                success: true,
                 message: "List merchant user berhasil diambil",
                 data: merchants
             });
         } catch (err) {
             console.error("Error fetching user merchants:", err);
-            return res.status(500).json({ message: "Gagal mengambil data merchant", error: err.message });
+            return res.status(500).json({ success: false, message: "Gagal mengambil data merchant", error: err.message });
         }
     }
 
@@ -85,7 +86,7 @@ class MerchantController {
                         attributes: ['id', 'startDate', 'endDate', 'isActive', 'expiredAt'],
                         include: [
                             {
-                                model: db.Packages,
+                                model: db.MerchantPackages,
                                 as: 'package',
                                 attributes: ['id', 'name', 'price', 'durationInDays', 'description']
                             }

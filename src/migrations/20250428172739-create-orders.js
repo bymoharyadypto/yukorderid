@@ -32,15 +32,21 @@ module.exports = {
       status: {
         type: Sequelize.STRING //('Pending', 'Paid', 'Shipped', 'Completed', 'Cancelled')
       },
+      userType: {
+        type: Sequelize.STRING //('Customer', 'Merchant')
+      },
+      orderType: {
+        type: Sequelize.STRING //('Normal', 'Subscription')
+      },
       paymentStatus: {
         type: Sequelize.STRING //('Pending', 'Paid', 'Failed')
       },
-      merchantDiscountId: {
+      discountId: {
         type: Sequelize.INTEGER,
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL'
       },
-      isMerchantDiscount: {
+      isDiscount: {
         type: Sequelize.BOOLEAN
       },
       note: {

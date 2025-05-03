@@ -14,6 +14,11 @@ module.exports = {
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
+      orderId: {
+        type: Sequelize.INTEGER,
+        onUpdate: 'CASCADE',
+        onDelete: 'CASCADE'
+      },
       packageId: {
         type: Sequelize.INTEGER,
         onUpdate: 'CASCADE',

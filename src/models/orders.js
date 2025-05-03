@@ -19,18 +19,22 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'orderId',
         as: 'orderItems'
       });
-      Orders.hasMany(models.OrderPayments, {
-        foreignKey: 'orderId',
-        as: 'orderPayments'
+      // Orders.hasMany(models.OrderPayments, {
+      //   foreignKey: 'orderId',
+      //   as: 'orderPayments'
+      // });
+      // Orders.hasMany(models.OrderShippingAddresses, {
+      //   foreignKey: 'orderId',
+      //   as: 'shippingAddresses'
+      // });
+      Orders.hasMany(models.MerchantDiscounts, {
+        foreignKey: 'discountId',
+        as: 'merchantDiscounts'
       });
-      Orders.hasMany(models.OrderShippingAddresses, {
-        foreignKey: 'orderId',
-        as: 'shippingAddresses'
-      });
-      Orders.hasMany(models.OrderShippingMethods, {
-        foreignKey: 'orderId',
-        as: 'shippingMethods'
-      });
+      // Orders.hasMany(models.OrderShippingMethods, {
+      //   foreignKey: 'orderId',
+      //   as: 'shippingMethods'
+      // });
     }
   }
   Orders.init({
@@ -39,10 +43,12 @@ module.exports = (sequelize, DataTypes) => {
     shippingCost: DataTypes.INTEGER,
     discountAmount: DataTypes.INTEGER,
     totalAmount: DataTypes.INTEGER,
-    status: DataTypes.STRING,
-    paymentStatus: DataTypes.STRING,
-    merchantDiscountId: DataTypes.INTEGER,
-    isMerchantDiscount: DataTypes.BOOLEAN,
+    status: DataTypes.STRING, // ('Pending', 'Processing', 'Completed', 'Cancelled', 'Refunded')
+    userType: DataTypes.STRING, // ('Customer', 'Merchant')
+    orderType: DataTypes.STRING, // ('Subscription', '')
+    paymentStatus: DataTypes.STRING, // ('Pending', 'Paid', 'Failed', 'Refunded')
+    discountId: DataTypes.INTEGER,
+    isDiscount: DataTypes.BOOLEAN,
     note: DataTypes.TEXT
   }, {
     sequelize,

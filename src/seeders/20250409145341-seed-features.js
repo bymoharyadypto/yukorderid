@@ -3,7 +3,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.bulkInsert('Features', [
+    await queryInterface.bulkInsert('MerchantFeatures', [
       { name: 'Maksimal Produk', description: 'Jumlah produk yang dapat dibuat', createdAt: new Date(), updatedAt: new Date() },
       { name: 'Kategori Produk', description: 'Jumlah kategori produk', createdAt: new Date(), updatedAt: new Date() },
       { name: 'Metode Pembayaran', description: 'Jumlah metode pembayaran', createdAt: new Date(), updatedAt: new Date() },
@@ -18,6 +18,6 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.bulkDelete('Features', null, {});
+    await queryInterface.bulkDelete('MerchantFeatures', null, {});
   }
 };
