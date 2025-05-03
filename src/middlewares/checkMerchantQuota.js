@@ -18,11 +18,11 @@ const checkMerchantQuota = (featureName, countModel, countWhere = {}) => {
                         where: { isActive: true },
                         include: [
                             {
-                                model: db.Packages,
+                                model: db.MerchantPackages,
                                 as: 'package',
                                 include: [
                                     {
-                                        model: db.Features,
+                                        model: db.MerchantFeatures,
                                         as: 'features',
                                         through: { model: db.PackageFeatures, attributes: ['defaultLimit'], as: 'packages' }
                                     }

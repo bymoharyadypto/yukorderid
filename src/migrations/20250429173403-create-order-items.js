@@ -14,7 +14,7 @@ module.exports = {
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
-      merchantProductId: {
+      productId: {
         type: Sequelize.INTEGER,
       },
       variantId: {
@@ -29,7 +29,7 @@ module.exports = {
       total: {
         type: Sequelize.INTEGER
       },
-      merchantDiscountId: {
+      discountId: {
         type: Sequelize.INTEGER,
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL'

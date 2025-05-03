@@ -26,7 +26,13 @@ module.exports = (sequelize, DataTypes) => {
       MerchantProducts.belongsToMany(models.Categories, {
         through: 'MerchantProductCategories',
         foreignKey: 'merchantProductId',
+        otherKey: 'categoryId',
         as: 'categories'
+      });
+      MerchantProducts.belongsToMany(models.MerchantDiscounts, {
+        through: 'MerchantDiscountProducts',
+        foreignKey: 'discountId',
+        otherKey: 'productId'
       });
     }
   }

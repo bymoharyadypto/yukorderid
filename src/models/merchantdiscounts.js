@@ -16,7 +16,6 @@ module.exports = (sequelize, DataTypes) => {
       });
       MerchantDiscounts.belongsToMany(models.MerchantProducts, {
         through: 'MerchantDiscountProducts',
-        as: 'discountedProducts',
         foreignKey: 'discountId',
         otherKey: 'productId'
       });

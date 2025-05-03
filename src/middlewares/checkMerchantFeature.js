@@ -17,11 +17,11 @@ const checkMerchantFeature = (featureName) => async (req, res, next) => {
                     where: { isActive: true },
                     include: [
                         {
-                            model: db.Packages,
+                            model: db.MerchantPackages,
                             as: 'package',
                             include: [
                                 {
-                                    model: db.Features,
+                                    model: db.MerchantFeatures,
                                     as: 'features',
                                     through: { model: db.PackageFeatures, attributes: ['defaultLimit'], as: 'packages' }
                                 }

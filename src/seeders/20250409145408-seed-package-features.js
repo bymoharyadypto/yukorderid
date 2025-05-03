@@ -3,7 +3,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.bulkInsert('PackageFeatures', [
+    await queryInterface.bulkInsert('MerchantPackageFeatures', [
       // Free
       { packageId: 1, featureId: 1, defaultLimit: 4, createdAt: new Date(), updatedAt: new Date() },
       { packageId: 1, featureId: 3, defaultLimit: 1, createdAt: new Date(), updatedAt: new Date() },
@@ -36,6 +36,6 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.bulkDelete('PackageFeatures', null, {});
+    await queryInterface.bulkDelete('MerchantPackageFeatures', null, {});
   }
 };

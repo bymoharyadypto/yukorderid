@@ -3,7 +3,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.bulkInsert('Packages', [
+    await queryInterface.bulkInsert('MerchantPackages', [
       {
         name: 'Free',
         price: 0,
@@ -32,6 +32,6 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.bulkDelete('Packages', null, {});
+    await queryInterface.bulkDelete('MerchantPackages', null, {});
   }
 };

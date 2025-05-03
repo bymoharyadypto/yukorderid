@@ -4,15 +4,15 @@ class PackageController {
 
     static async getAllPackages(req, res) {
         try {
-            const packages = await db.Packages.findAll({
+            const packages = await db.MerchantPackages.findAll({
                 attributes: ['id', 'name', 'price', 'durationInDays', 'description'],
                 include: [
                     {
-                        model: db.Features,
+                        model: db.MerchantFeatures,
                         as: 'features',
                         attributes: ['id', 'name', 'description'],
                         through: {
-                            model: db.PackageFeatures,
+                            model: db.MerchantPackageFeatures,
                             attributes: ['defaultLimit'],
                         },
                     },
@@ -28,21 +28,21 @@ class PackageController {
                         id: feature.id,
                         name: feature.name,
                         description: feature.description,
-                        defaultLimit: feature.PackageFeatures?.defaultLimit ?? 'Unlimited'
+                        defaultLimit: feature.MerchantPackageFeatures?.defaultLimit ?? 'Unlimited'
                     }))
                 };
             });
 
             res.status(200).json({
                 success: true,
-                message: 'Successfully to retrieve packages',
+                message: 'Berhasil mengambil data paket',
                 data: formattedPackages
             });
         } catch (error) {
             console.error(error);
             res.status(500).json({
                 success: false,
-                message: 'Failed to retrieve packages',
+                message: 'Gagal mengambil data paket',
             });
         }
     }
