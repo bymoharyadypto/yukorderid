@@ -13,12 +13,10 @@ module.exports = (sequelize, DataTypes) => {
       // define association here
       MerchantDiscountPaymentMethods.belongsTo(models.MerchantDiscounts, {
         foreignKey: 'discountId',
-        as: 'discount'
       });
 
       MerchantDiscountPaymentMethods.belongsTo(models.PaymentMethods, {
         foreignKey: 'paymentMethodId',
-        as: 'paymentMethod'
       });
     }
   }

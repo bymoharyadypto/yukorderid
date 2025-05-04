@@ -7,7 +7,7 @@ class MerchantController {
         try {
             const userId = req.user?.id;
             const merchantIds = req.user?.merchantIds;
-            // console.log(req.user);
+            console.log(req.user);
 
             // if (!userId || !merchantIds) {
             //     return res.status(401).json({ message: "User tidak terdaftar sebagai merchant" });
@@ -25,6 +25,7 @@ class MerchantController {
                     {
                         model: db.MerchantSubscriptions,
                         as: 'subscription',
+                        where: { isActive: true },
                         attributes: ['id', 'startDate', 'endDate', 'isActive', 'expiredAt'],
                         include: [
                             {
@@ -38,8 +39,7 @@ class MerchantController {
                                         attributes: ['id', 'name', 'description'],
                                         through: {
                                             model: db.MerchantPackageFeatures,
-                                            attributes: ['defaultLimit'],
-                                            as: 'packages',
+                                            // attributes: ['defaultLi'],
                                         },
                                     },
                                 ],
@@ -55,10 +55,35 @@ class MerchantController {
                 return res.status(404).json({ message: "Tidak ada merchant yang ditemukan" });
             }
 
+            const formattedMerchants = merchants.map((merchant) => {
+                const m = merchant.toJSON();
+
+                const features = m.subscription?.package?.features?.map((feature) => ({
+                    id: feature.id,
+                    name: feature.name,
+                    description: feature.description,
+                    defaultLimit: feature.MerchantPackageFeatures?.defaultLi ??
+                        feature.MerchantPackageFeatures?.defaultLimit ??
+                        'Unlimited'
+                })) || [];
+
+                if (m.subscription?.package) {
+                    m.subscription.package.features = features;
+                }
+
+                return {
+                    id: m.id,
+                    storeName: m.storeName,
+                    storeUrl: m.storeUrl,
+                    isActive: m.isActive,
+                    merchantProfile: m.merchantProfile,
+                    subscription: m.subscription
+                };
+            });
             return res.status(200).json({
                 success: true,
                 message: "List merchant user berhasil diambil",
-                data: merchants
+                data: formattedMerchants
             });
         } catch (err) {
             console.error("Error fetching user merchants:", err);
@@ -88,7 +113,18 @@ class MerchantController {
                             {
                                 model: db.MerchantPackages,
                                 as: 'package',
-                                attributes: ['id', 'name', 'price', 'durationInDays', 'description']
+                                attributes: ['id', 'name', 'price', 'durationInDays', 'description'],
+                                include: [
+                                    {
+                                        model: db.MerchantFeatures,
+                                        as: 'features',
+                                        attributes: ['id', 'name', 'description'],
+                                        through: {
+                                            model: db.MerchantPackageFeatures,
+                                            // attributes: ['defaultLimit'],
+                                        },
+                                    },
+                                ],
                             }
                         ]
                     },
@@ -112,8 +148,23 @@ class MerchantController {
             if (!merchant) {
                 return res.status(404).json({ message: "Merchant tidak ditemukan" });
             }
+            const formattedMerchant = merchant.toJSON();
 
-            return res.status(200).json({ data: merchant });
+            const features = formattedMerchant.subscription?.package?.features?.map(feature => ({
+                id: feature.id,
+                name: feature.name,
+                description: feature.description,
+                defaultLimit: feature.MerchantPackageFeatures?.defaultLi ??
+                    feature.MerchantPackageFeatures?.defaultLimit ??
+                    'Unlimited'
+            })) || [];
+
+            if (formattedMerchant.subscription?.package) {
+                formattedMerchant.subscription.package.features = features;
+            }
+
+            return res.status(200).json({ data: formattedMerchant });
+            // return res.status(200).json({ data: merchant });
         } catch (error) {
             console.error(error);
             return res.status(500).json({ message: "Gagal mengambil data merchant", error: error.message });

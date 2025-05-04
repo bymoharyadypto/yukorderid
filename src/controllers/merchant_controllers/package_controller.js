@@ -19,6 +19,7 @@ class PackageController {
                 ],
             });
 
+
             const formattedPackages = packages.map(pkg => {
                 const { features, ...packageData } = pkg.toJSON();
 

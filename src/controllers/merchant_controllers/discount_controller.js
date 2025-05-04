@@ -54,10 +54,13 @@ class MerchantDiscountController {
                 isAllPayments
             } = req.body;
 
-            const { merchantId } = req.params;
+            // console.log('req.body', req.body);
 
+            const { merchantId } = req.params;
             // const userId = req.user?.id;
             const merchantIds = req.user?.merchantIds;
+            // console.log('merchantIds', merchantIds);
+
 
             if (!merchantId || isNaN(Number(merchantId))) {
                 return res.status(400).json({ message: 'Parameter merchantId tidak valid' });
@@ -68,6 +71,9 @@ class MerchantDiscountController {
             if (!Array.isArray(merchantIds) || !merchantIds.includes(parsedMerchantId)) {
                 return res.status(403).json({ message: 'Akses ke merchant tidak diizinkan atau merchant tidak ditemukan' });
             }
+
+            // console.log('parsedMerchantId', parsedMerchantId);
+
 
             const discount = await db.MerchantDiscounts.create({
                 merchantId: parsedMerchantId,
@@ -82,7 +88,11 @@ class MerchantDiscountController {
                 isAllProducts,
                 isAllPayments,
                 isActive: false
-            }, { transaction });
+            },
+                { transaction }
+            );
+
+            console.log(discount, "discount");
 
             let finalProductIds = [];
             if (isAllProducts === true) {
@@ -155,22 +165,26 @@ class MerchantDiscountController {
             // await transaction.commit();
             // return res.status(201).json({ message: 'Diskon berhasil dibuat', data: discount });
         } catch (error) {
-            await transaction.rollback();
+            // await transaction.rollback();
             console.error(error);
             return res.status(500).json({ message: 'Gagal membuat diskon', error: error.message });
         }
     }
 
     static async getDiscounts(req, res) {
+        console.log('getDiscounts called');
+
         try {
             // const merchantId = req.login.merchantId;
             const { merchantId } = req.params;
             const discounts = await db.MerchantDiscounts.findAll({
+                // attributes: { exclude: ['discountId'] },
                 where: { merchantId },
+                logging: console.log,
                 include: [
                     {
                         model: db.MerchantProducts,
-                        as: 'discountedProducts',
+                        as: 'products',
                         attributes: ['id', 'name', 'price'],
                         through: { attributes: [] }
                     },
@@ -182,9 +196,12 @@ class MerchantDiscountController {
                     }
                 ]
             });
-            res.json({ data: discounts });
+            if (!discounts || discounts.length === 0) {
+                return res.status(404).json({ message: 'Tidak ada diskon yang ditemukan untuk merchant ini' });
+            }
+            return res.status(200).json({ data: discounts });
         } catch (err) {
-            res.status(500).json({ message: 'Gagal mengambil data diskon', error: err.message });
+            return res.status(500).json({ message: 'Gagal mengambil data diskon', error: err.message });
         }
     }
 

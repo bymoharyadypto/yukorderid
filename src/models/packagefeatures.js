@@ -16,8 +16,22 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   MerchantPackageFeatures.init({
-    packageId: DataTypes.INTEGER,
-    featureId: DataTypes.INTEGER,
+    packageId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'MerchantPackages',
+        key: 'id'
+      }
+    },
+    featureId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'MerchantFeatures',
+        key: 'id'
+      }
+    },
     defaultLimit: DataTypes.INTEGER
   }, {
     sequelize,

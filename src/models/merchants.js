@@ -11,6 +11,7 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
+      Merchants.hasMany(models.MerchantProducts, { as: 'products', foreignKey: 'merchantId' })
       Merchants.hasOne(models.MerchantSubscriptions, { as: 'subscription', foreignKey: 'merchantId' })
       Merchants.hasOne(models.MerchantProfiles, { as: 'merchantProfile', foreignKey: 'merchantId' })
       Merchants.hasMany(models.MerchantOperatingHours, { as: 'operatingHours', foreignKey: 'merchantId' })
@@ -22,12 +23,12 @@ module.exports = (sequelize, DataTypes) => {
     userId: DataTypes.INTEGER,
     storeName: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
       unique: true,
     },
     subdomain: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
       unique: true,
       validate: {
         isLowercase: true,
@@ -36,12 +37,8 @@ module.exports = (sequelize, DataTypes) => {
     },
     storeUrl: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
       unique: true,
-      get() {
-        const baseUrl = 'https://yukorder.id';
-        return `${baseUrl}/${this.getDataValue('subdomain')}`;
-      },
     },
     isActive: DataTypes.BOOLEAN
   }, {

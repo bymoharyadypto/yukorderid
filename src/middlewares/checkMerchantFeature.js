@@ -23,8 +23,12 @@ const checkMerchantFeature = (featureName) => async (req, res, next) => {
                                 {
                                     model: db.MerchantFeatures,
                                     as: 'features',
-                                    through: { model: db.PackageFeatures, attributes: ['defaultLimit'], as: 'packages' }
-                                }
+                                    attributes: ['id', 'name', 'description'],
+                                    through: {
+                                        model: db.MerchantPackageFeatures,
+                                        attributes: ['defaultLimit'],
+                                    },
+                                },
                             ]
                         }
                     ]

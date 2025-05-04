@@ -1,16 +1,19 @@
 const { signAccessToken, signRefreshToken } = require('./jwt');
 const db = require('../models');
 
-async function getMerchantIdsByUser(userId) {
+async function getMerchantIdsByUser(userId, transaction) {
     const merchants = await db.Merchants.findAll({
         where: { userId, isActive: true },
-        attributes: ['id']
+        attributes: ['id'],
+        transaction
     });
     return merchants.map(m => m.id);
 }
 
-async function signAccessTokenWithMerchants(user, options = {}) {
-    const merchantIds = await getMerchantIdsByUser(user.id);
+async function signAccessTokenWithMerchants(user, transaction, options = {}) {
+    const merchantIds = await getMerchantIdsByUser(user.id, transaction);
+    // console.log(merchantIds, "merchantIds token");
+
     return signAccessToken({
         id: user.id,
         phoneNumber: user.phoneNumber,
@@ -20,8 +23,10 @@ async function signAccessTokenWithMerchants(user, options = {}) {
     });
 }
 
-async function signRefreshTokenWithMerchants(user, options = {}) {
-    const merchantIds = await getMerchantIdsByUser(user.id);
+async function signRefreshTokenWithMerchants(user, transaction, options = {}) {
+    const merchantIds = await getMerchantIdsByUser(user.id, transaction);
+    // console.log(merchantIds, "merchantIds refresh token");
+
     return signRefreshToken({
         id: user.id,
         phoneNumber: user.phoneNumber,

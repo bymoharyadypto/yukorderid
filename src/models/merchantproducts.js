@@ -31,8 +31,9 @@ module.exports = (sequelize, DataTypes) => {
       });
       MerchantProducts.belongsToMany(models.MerchantDiscounts, {
         through: 'MerchantDiscountProducts',
-        foreignKey: 'discountId',
-        otherKey: 'productId'
+        foreignKey: 'productId',
+        otherKey: 'discountId',
+        as: 'discounts'
       });
     }
   }

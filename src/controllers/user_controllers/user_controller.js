@@ -168,12 +168,16 @@ class UserController {
         const transaction = await db.sequelize.transaction();
         try {
             const { name, email, storeName, address, district, city, province, packageId, paymentMethodId, transferProofUrl, notes } = req.body;
+            console.log(req.user, "req.user");
 
             const existingUser = await db.Users.findOne({
                 where: {
-                    [Op.or]: [{ email }, { phoneNumber: req.user.phoneNumber }]
+                    phoneNumber: req.user.phoneNumber
                 }
             });
+
+            // console.log(existingUser, "existingUser");
+
 
             if (existingUser && existingUser.isVerified) {
                 throw { status: 400, message: "Email atau Nomor Telepon sudah terdaftar dan terverifikasi" };
@@ -196,8 +200,10 @@ class UserController {
                 roleId: role.id,
             }, { transaction });
 
-            const subdomain = slugify(storeName, { lower: true, strict: true });
-
+            // const subdomain = slugify(storeName, { lower: true, strict: true });
+            const subdomain = storeName.replace(/\s+/g, '').toLowerCase().replace(/[^a-z0-9]/gi, '');
+            // console.log(subdomain, 'subdomain');
+            const storeUrl = `https://yukorder.id/${subdomain}`;
             const existingMerchant = await db.Merchants.findOne({ where: { subdomain } });
             if (existingMerchant) {
                 throw { status: 400, message: 'Subdomain sudah digunakan, pilih nama toko lain.' };
@@ -207,6 +213,7 @@ class UserController {
                 userId: existingUser.id,
                 storeName,
                 subdomain,
+                storeUrl,
                 isActive: true,
             }, { transaction });
 
@@ -224,20 +231,13 @@ class UserController {
                 throw { status: 404, message: 'Paket tidak ditemukan' };
             }
 
-            await db.MerchantSubscriptions.create({
-                merchantId: merchant.id,
-                packageId,
-                isActive: true,
-            }, { transaction });
-
-
             const order = await db.Orders.create({
                 userId: existingUser.id,
                 totalAmount: selectedPackage.price,
-                status: 'Completed',
+                status: 'Pending',
                 userType: 'Merchant',
                 orderType: 'Subscription',
-                paymentStatus: 'Paid',
+                paymentStatus: 'Pending',
             }, { transaction });
 
             await db.OrderItems.create({
@@ -245,6 +245,13 @@ class UserController {
                 productId: selectedPackage.id,
                 quantity: 1,
                 total: selectedPackage.price
+            }, { transaction });
+
+            await db.MerchantSubscriptions.create({
+                merchantId: merchant.id,
+                orderId: order.id,
+                packageId,
+                isActive: true,
             }, { transaction });
 
 
@@ -259,18 +266,18 @@ class UserController {
                 merchantId: merchant.id,
                 paymentMethodId: paymentMethod.id,
                 amount: selectedPackage.price,
-                status: 'Paid',
-                paidAt: new Date(),
+                status: 'Pending',
+                paidAt: null,
             }, { transaction });
 
             await db.PaymentVerifications.create({
                 paymentId: payment.id,
                 transferProofUrl,
                 uploadedAt: new Date(),
-                verifiedAt: new Date(),
+                verifiedAt: null,
                 verifiedBy: null,
                 notes: notes ?? null,
-                status: 'Accepted',
+                status: 'Pending',
             }, { transaction });
 
             const existingToken = await db.RefreshTokens.findOne({
@@ -289,6 +296,8 @@ class UserController {
                 include: { model: db.Roles, as: 'role' }
             });
 
+            // console.log(updatedUser, "updatedUser");
+
             // const accessToken = signAccessToken({
             //     id: updatedUser.id,
             //     phoneNumber: updatedUser.phoneNumber,
@@ -302,8 +311,8 @@ class UserController {
             //     role: updatedUser.role,
             //     merchantIds: [merchant.id]
             // });
-            const accessToken = await signAccessTokenWithMerchants(updatedUser);
-            const refreshToken = await signRefreshTokenWithMerchants(updatedUser);
+            const accessToken = await signAccessTokenWithMerchants(updatedUser, transaction);
+            const refreshToken = await signRefreshTokenWithMerchants(updatedUser, transaction);
 
             await db.RefreshTokens.create({
                 userId: existingUser.id,

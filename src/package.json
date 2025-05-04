@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "terminate-db":"node scripts/terminate-connections.js && npx sequelize db:drop --env development",
     "dev": "cross-env NODE_ENV=development nodemon bin/www.js",
     "start": "node ./bin/www.js"
   },
