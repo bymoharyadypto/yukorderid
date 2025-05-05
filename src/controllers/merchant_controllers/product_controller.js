@@ -133,6 +133,14 @@ class MerchantProductController {
                 attributes: ['id', 'name', 'description', 'price', 'crossedPrice', 'stock', 'isPreOrder', 'preOrderDays', 'isActive'],
                 include: [
                     {
+                        model: db.MerchantDiscounts,
+                        as: 'discounts',
+                        attributes: ['id', 'code', 'description', 'discountType', 'discountValue', 'startDate', 'endDate', 'isActive'],
+                        through: { attributes: [] },
+                        // where: { isActive: true },
+                        required: false
+                    },
+                    {
                         model: db.MerchantProductImages,
                         as: 'images',
                         attributes: ['id', 'imageUrl']
