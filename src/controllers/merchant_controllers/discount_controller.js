@@ -177,30 +177,51 @@ class MerchantDiscountController {
         try {
             // const merchantId = req.login.merchantId;
             const { merchantId } = req.params;
+            // const discounts = await db.MerchantDiscounts.findAll({
+            //     where: { merchantId },
+            //     // logging: console.log,
+            //     include: [
+            //         {
+            //             model: db.MerchantProducts,
+            //             as: 'products',
+            //             attributes: ['id', 'name', 'price'],
+            //             // through: { attributes: [] }
+            //         },
+            //         // {
+            //         //     model: db.PaymentMethods,
+            //         //     as: 'paymentMethods',
+            //         //     attributes: ['id', 'name', 'type', 'provider'],
+            //         //     through: { attributes: [] }
+            //         // }
+            //     ]
+            // });
             const discounts = await db.MerchantDiscounts.findAll({
-                // attributes: { exclude: ['discountId'] },
                 where: { merchantId },
-                logging: console.log,
                 include: [
                     {
                         model: db.MerchantProducts,
                         as: 'products',
-                        attributes: ['id', 'name', 'price'],
-                        through: { attributes: [] }
-                    },
-                    {
-                        model: db.PaymentMethods,
-                        as: 'paymentMethods',
-                        attributes: ['id', 'name', 'type', 'provider'],
-                        through: { attributes: [] }
+                        attributes: ['id', 'name', 'price', 'stock', 'isActive'],
+                        through: { attributes: [] },
+                        where: {
+                            isActive: true
+                        },
+                        required: false
                     }
-                ]
+                ],
+                order: [
+                    ['createdAt', 'DESC']
+                ],
             });
+
             if (!discounts || discounts.length === 0) {
                 return res.status(404).json({ message: 'Tidak ada diskon yang ditemukan untuk merchant ini' });
             }
+
             return res.status(200).json({ data: discounts });
         } catch (err) {
+            console.log('Error fetching discounts:', err);
+            console.error(err);
             return res.status(500).json({ message: 'Gagal mengambil data diskon', error: err.message });
         }
     }

@@ -10,14 +10,14 @@ module.exports = (sequelize, DataTypes) => {
      * The `models/index` file will call this method automatically.
      */
     static associate(models) {
-      MerchantDiscountProducts.belongsTo(models.MerchantDiscounts, {
-        foreignKey: 'discountId',
-        as: 'discount'
-      });
-      MerchantDiscountProducts.belongsTo(models.MerchantProducts, {
-        foreignKey: 'productId',
-        as: 'product'
-      });
+      // MerchantDiscountProducts.belongsTo(models.MerchantDiscounts, {
+      //   foreignKey: 'discountId',
+      //   as: 'discount'
+      // });
+      // MerchantDiscountProducts.belongsTo(models.MerchantProducts, {
+      //   foreignKey: 'productId',
+      //   as: 'product'
+      // });
     }
   }
   MerchantDiscountProducts.init({
