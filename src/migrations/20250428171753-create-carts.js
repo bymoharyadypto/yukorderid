@@ -10,10 +10,20 @@ module.exports = {
         type: Sequelize.INTEGER
       },
       userId: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
+        onDelete: 'CASCADE',
+        // references: {
+        //   model: 'Users',
+        //   key: 'id'
+        // }
       },
       merchantProductId: {
-        type: Sequelize.INTEGER
+        type: Sequelize.INTEGER,
+        onDelete: 'CASCADE',
+        // references: {
+        //   model: 'MerchantProducts',
+        //   key: 'id'
+        // }
       },
       variantId: {
         type: Sequelize.INTEGER

@@ -107,8 +107,8 @@ class MerchantDiscountController {
 
             if (finalProductIds.length) {
                 const productDiscounts = finalProductIds.map(productId => ({
-                    discountId: discount.id,
-                    productId
+                    merchantDiscountId: discount.id,
+                    merchantProductId: productId
                 }));
                 await db.MerchantDiscountProducts.bulkCreate(productDiscounts, { transaction });
             }
@@ -126,7 +126,7 @@ class MerchantDiscountController {
 
             if (finalPaymentMethodIds.length) {
                 const methodDiscounts = finalPaymentMethodIds.map(paymentMethodId => ({
-                    discountId: discount.id,
+                    merchantDiscountId: discount.id,
                     paymentMethodId
                 }));
                 await db.MerchantDiscountPaymentMethods.bulkCreate(methodDiscounts, { transaction });
@@ -229,11 +229,11 @@ class MerchantDiscountController {
     static async updateDiscountStatus(req, res) {
         const transaction = await db.sequelize.transaction();
         try {
-            const { merchantId, discountId } = req.params;
+            const { merchantId, merchantDiscountId } = req.params;
             const { isActive } = req.body;
             const merchantIds = req.user?.merchantIds;
 
-            if (!merchantId || isNaN(Number(merchantId)) || !discountId || isNaN(Number(discountId))) {
+            if (!merchantId || isNaN(Number(merchantId)) || !merchantDiscountId || isNaN(Number(merchantDiscountId))) {
                 return res.status(400).json({ message: 'Parameter merchantId atau discountId tidak valid' });
             }
 
@@ -247,7 +247,7 @@ class MerchantDiscountController {
                 { isActive },
                 {
                     where: {
-                        id: discountId,
+                        id: merchantDiscountId,
                         merchantId: parsedMerchantId,
                     },
                     transaction

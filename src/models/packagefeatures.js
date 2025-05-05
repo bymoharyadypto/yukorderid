@@ -19,18 +19,18 @@ module.exports = (sequelize, DataTypes) => {
     packageId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      references: {
-        model: 'MerchantPackages',
-        key: 'id'
-      }
+      // references: {
+      //   model: 'MerchantPackages',
+      //   key: 'id'
+      // }
     },
     featureId: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      references: {
-        model: 'MerchantFeatures',
-        key: 'id'
-      }
+      // references: {
+      //   model: 'MerchantFeatures',
+      //   key: 'id'
+      // }
     },
     defaultLimit: DataTypes.INTEGER
   }, {

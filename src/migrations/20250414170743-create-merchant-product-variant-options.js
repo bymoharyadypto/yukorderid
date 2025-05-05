@@ -11,6 +11,10 @@ module.exports = {
       },
       merchantProductVariantId: {
         type: Sequelize.INTEGER,
+        // references: {
+        //   model: 'MerchantProductVariants',
+        //   key: 'id'
+        // },
         onDelete: 'CASCADE'
       },
       value: {

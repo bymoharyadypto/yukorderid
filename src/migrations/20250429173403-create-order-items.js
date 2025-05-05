@@ -29,8 +29,12 @@ module.exports = {
       total: {
         type: Sequelize.INTEGER
       },
-      discountId: {
+      merchantDiscountId: {
         type: Sequelize.INTEGER,
+        // references: {
+        //   model: 'MerchantDiscounts',
+        //   key: 'id'
+        // },
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL'
       },

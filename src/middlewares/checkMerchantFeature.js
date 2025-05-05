@@ -26,7 +26,7 @@ const checkMerchantFeature = (featureName) => async (req, res, next) => {
                                     attributes: ['id', 'name', 'description'],
                                     through: {
                                         model: db.MerchantPackageFeatures,
-                                        attributes: ['defaultLimit'],
+                                        // attributes: ['defaultLimit'],
                                     },
                                 },
                             ]

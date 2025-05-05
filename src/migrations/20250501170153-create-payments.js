@@ -11,11 +11,19 @@ module.exports = {
       },
       orderId: {
         type: Sequelize.INTEGER,
+        // references: {
+        //   model: 'Orders',
+        //   key: 'id'
+        // },
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL'
       },
       paymentMethodId: {
         type: Sequelize.INTEGER,
+        // references: {
+        //   model: 'PaymentMethods',
+        //   key: 'id'
+        // },
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL'
       },

@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
         through: 'MerchantDiscountPaymentMethods',
         as: 'discounts',
         foreignKey: 'paymentMethodId',
-        otherKey: 'discountId',
+        otherKey: 'merchantDiscountId',
       });
     }
   }

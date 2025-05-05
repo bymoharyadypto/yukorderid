@@ -11,6 +11,10 @@ module.exports = {
       },
       merchantId: {
         type: Sequelize.INTEGER,
+        // references: {
+        //   model: 'Merchants',
+        //   key: 'id'
+        // },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },

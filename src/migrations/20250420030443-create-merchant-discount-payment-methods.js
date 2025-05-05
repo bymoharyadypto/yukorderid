@@ -9,21 +9,21 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
-      discountId: {
+      merchantDiscountId: {
         type: Sequelize.INTEGER,
-        references: {
-          model: 'MerchantDiscounts',
-          key: 'id'
-        },
+        // references: {
+        //   model: 'MerchantDiscounts',
+        //   key: 'id'
+        // },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
       paymentMethodId: {
         type: Sequelize.INTEGER,
-        references: {
-          model: 'PaymentMethods',
-          key: 'id'
-        },
+        // references: {
+        //   model: 'PaymentMethods',
+        //   key: 'id'
+        // },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },

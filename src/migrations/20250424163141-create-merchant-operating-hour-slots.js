@@ -11,6 +11,11 @@ module.exports = {
       },
       merchantOperatingHourId: {
         type: Sequelize.INTEGER,
+        // references: {
+        //   model: 'MerchantOperatingHours',
+        //   key: 'id'
+        // },
+        onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
       openTime: {

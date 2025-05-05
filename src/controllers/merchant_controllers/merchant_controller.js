@@ -46,6 +46,20 @@ class MerchantController {
                             }
                         ]
 
+                    },
+                    {
+                        model: db.MerchantOperatingHours,
+                        as: 'operatingHours',
+                        attributes: ['id', 'day', 'isOpen', 'is24Hours'],
+                        order: [['id', 'ASC']],
+                        include:
+                        {
+                            model: db.MerchantOperatingHourSlots,
+                            attributes: ["id", "openTime", "closeTime"],
+                            as: 'slots',
+
+                        }
+
                     }
                 ],
                 order: [['createdAt', 'DESC']]

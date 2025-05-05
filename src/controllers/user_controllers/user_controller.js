@@ -242,7 +242,7 @@ class UserController {
 
             await db.OrderItems.create({
                 orderId: order.id,
-                productId: selectedPackage.id,
+                merchantProductId: selectedPackage.id,
                 quantity: 1,
                 total: selectedPackage.price
             }, { transaction });

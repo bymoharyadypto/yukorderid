@@ -41,8 +41,12 @@ module.exports = {
       paymentStatus: {
         type: Sequelize.STRING //('Pending', 'Paid', 'Failed')
       },
-      discountId: {
+      merchantDiscountId: {
         type: Sequelize.INTEGER,
+        // references: {
+        //   model: 'MerchantDiscounts',
+        //   key: 'id'
+        // },
         onUpdate: 'CASCADE',
         onDelete: 'SET NULL'
       },

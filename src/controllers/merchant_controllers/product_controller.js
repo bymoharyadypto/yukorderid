@@ -133,14 +133,6 @@ class MerchantProductController {
                 attributes: ['id', 'name', 'description', 'price', 'crossedPrice', 'stock', 'isPreOrder', 'preOrderDays', 'isActive'],
                 include: [
                     {
-                        model: db.MerchantDiscounts,
-                        as: 'discounts',
-                        attributes: ['id', 'code', 'description', 'discountType', 'discountValue', 'startDate', 'endDate', 'isActive'],
-                        through: { attributes: [] },
-                        // where: { isActive: true },
-                        required: false
-                    },
-                    {
                         model: db.MerchantProductImages,
                         as: 'images',
                         attributes: ['id', 'imageUrl']
@@ -161,7 +153,15 @@ class MerchantProductController {
                                 attributes: ['id', 'value', 'price', 'crossedPrice', 'stock', 'isActive']
                             }
                         ]
-                    }
+                    },
+                    {
+                        model: db.MerchantDiscounts,
+                        as: 'discounts',
+                        attributes: ['id', 'code', 'description', 'discountType', 'discountValue', 'startDate', 'endDate', 'isActive'],
+                        through: { attributes: [] },
+                        // where: { isActive: true },
+                        required: false
+                    },
                 ],
                 order: [['createdAt', 'DESC']]
             });
@@ -176,15 +176,15 @@ class MerchantProductController {
 
     static async getMerchantProductById(req, res) {
         try {
-            const { merchantId, productId } = req.params;
+            const { merchantId, merchantProductId } = req.params;
 
-            if (!merchantId || !productId) {
+            if (!merchantId || !merchantProductId) {
                 return res.status(400).json({ message: 'Merchant ID dan Product ID wajib diisi' });
             }
 
             const product = await db.MerchantProducts.findOne({
                 where: {
-                    id: productId,
+                    id: merchantProductId,
                     merchantId
                 },
                 attributes: ['id', 'name', 'description', 'price', 'crossedPrice', 'stock', 'isPreOrder', 'preOrderDays', 'isActive'],
@@ -210,7 +210,15 @@ class MerchantProductController {
                                 attributes: ['id', 'value', 'price', 'crossedPrice', 'stock', 'isActive']
                             }
                         ]
-                    }
+                    },
+                    {
+                        model: db.MerchantDiscounts,
+                        as: 'discounts',
+                        attributes: ['id', 'code', 'description', 'discountType', 'discountValue', 'startDate', 'endDate', 'isActive'],
+                        through: { attributes: [] },
+                        // where: { isActive: true },
+                        required: false
+                    },
                 ]
             });
 
@@ -228,7 +236,7 @@ class MerchantProductController {
 
     static async updateMerchantProduct(req, res) {
         const transaction = await db.sequelize.transaction();
-        const { merchantId, productId } = req.params;
+        const { merchantId, merchantProductId } = req.params;
 
         try {
             const {
@@ -245,7 +253,7 @@ class MerchantProductController {
                 variants
             } = req.body;
 
-            if (!name || !description || !imageUrls?.length || !merchantId || !productId) {
+            if (!name || !description || !imageUrls?.length || !merchantId || !merchantProductId) {
                 return res.status(400).json({ message: 'Data produk tidak lengkap' });
             }
 
@@ -268,7 +276,7 @@ class MerchantProductController {
                 return res.status(400).json({ message: 'Total stok varian tidak boleh melebihi stok produk utama' });
             }
 
-            const product = await db.MerchantProducts.findOne({ where: { id: productId, merchantId } });
+            const product = await db.MerchantProducts.findOne({ where: { id: merchantProductId, merchantId } });
             if (!product) {
                 return res.status(404).json({ message: 'Produk tidak ditemukan' });
             }
@@ -363,17 +371,17 @@ class MerchantProductController {
     static async updateProductStatus(req, res) {
         const transaction = await db.sequelize.transaction();
         try {
-            const { merchantId, productId } = req.params;
+            const { merchantId, merchantProductId } = req.params;
             const { isActive } = req.body;
 
-            if (!merchantId || !productId) {
+            if (!merchantId || !merchantProductId) {
                 return res.status(400).json({ message: 'Merchant ID dan Product ID tidak boleh kosong' });
             }
 
             const [updatedRows] = await db.MerchantProducts.update(
                 { isActive },
                 {
-                    where: { id: productId, merchantId },
+                    where: { id: merchantProductId, merchantId },
                     transaction
                 }
             );

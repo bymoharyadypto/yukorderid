@@ -28,7 +28,7 @@ module.exports = (sequelize, DataTypes) => {
       //   as: 'shippingAddresses'
       // });
       Orders.hasMany(models.MerchantDiscounts, {
-        foreignKey: 'discountId',
+        foreignKey: 'merchantDiscountId',
         as: 'merchantDiscounts'
       });
       // Orders.hasMany(models.OrderShippingMethods, {
@@ -47,7 +47,7 @@ module.exports = (sequelize, DataTypes) => {
     userType: DataTypes.STRING, // ('Customer', 'Merchant')
     orderType: DataTypes.STRING, // ('Subscription', '')
     paymentStatus: DataTypes.STRING, // ('Pending', 'Paid', 'Failed', 'Refunded')
-    discountId: DataTypes.INTEGER,
+    merchantDiscountId: DataTypes.INTEGER,
     isDiscount: DataTypes.BOOLEAN,
     note: DataTypes.TEXT
   }, {

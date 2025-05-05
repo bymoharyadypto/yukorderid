@@ -11,17 +11,17 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      MerchantDiscountPaymentMethods.belongsTo(models.MerchantDiscounts, {
-        foreignKey: 'discountId',
-      });
+      // MerchantDiscountPaymentMethods.belongsTo(models.MerchantDiscounts, {
+      //   foreignKey: 'merchantDiscountId',
+      // });
 
-      MerchantDiscountPaymentMethods.belongsTo(models.PaymentMethods, {
-        foreignKey: 'paymentMethodId',
-      });
+      // MerchantDiscountPaymentMethods.belongsTo(models.PaymentMethods, {
+      //   foreignKey: 'paymentMethodId',
+      // });
     }
   }
   MerchantDiscountPaymentMethods.init({
-    discountId: DataTypes.INTEGER,
+    merchantDiscountId: DataTypes.INTEGER,
     paymentMethodId: DataTypes.INTEGER
   }, {
     sequelize,

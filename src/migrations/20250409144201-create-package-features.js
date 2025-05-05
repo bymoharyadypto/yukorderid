@@ -11,10 +11,19 @@ module.exports = {
       },
       packageId: {
         type: Sequelize.INTEGER,
+        // references: {
+        //   model: 'MerchantPackages',
+        //   key: 'id'
+        // },
+        onDelete: 'CASCADE',
         onDelete: 'CASCADE'
       },
       featureId: {
         type: Sequelize.INTEGER,
+        // references: {
+        //   model: 'MerchantFeatures',
+        //   key: 'id'
+        // },
         onDelete: 'CASCADE'
       },
       defaultLimit: {

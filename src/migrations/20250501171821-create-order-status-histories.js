@@ -11,6 +11,10 @@ module.exports = {
       },
       orderId: {
         type: Sequelize.INTEGER,
+        // references: {
+        //   model: 'Orders',
+        //   key: 'id'
+        // },
         onUpdate: 'CASCADE',
         onDelete: 'CASCADE'
       },
