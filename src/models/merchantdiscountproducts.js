@@ -6,7 +6,14 @@ module.exports = (sequelize, DataTypes) => {
   class MerchantDiscountProducts extends Model {
 
     static associate(models) {
-
+      MerchantDiscountProducts.belongsTo(models.MerchantDiscounts, {
+        foreignKey: 'merchantDiscountId',
+        // as: 'discount'
+      });
+      // MerchantDiscountProducts.belongsTo(models.MerchantProducts, {
+      //   foreignKey: 'merchantProductId',
+      //   as: 'product'
+      // });
     }
   }
   MerchantDiscountProducts.init({

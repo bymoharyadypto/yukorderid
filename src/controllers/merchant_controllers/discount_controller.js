@@ -72,9 +72,6 @@ class MerchantDiscountController {
                 return res.status(403).json({ message: 'Akses ke merchant tidak diizinkan atau merchant tidak ditemukan' });
             }
 
-            // console.log('parsedMerchantId', parsedMerchantId);
-
-
             const discount = await db.MerchantDiscounts.create({
                 merchantId: parsedMerchantId,
                 code,
@@ -92,7 +89,7 @@ class MerchantDiscountController {
                 { transaction }
             );
 
-            console.log(discount, "discount");
+            // console.log(discount, "discount");
 
             let finalProductIds = [];
             if (isAllProducts === true) {
@@ -196,6 +193,7 @@ class MerchantDiscountController {
             //     ]
             // });
             const discounts = await db.MerchantDiscounts.findAll({
+                // attributes: ["id", "code", "description", "discountType", "discountValue", "budgetPerTransaction", "quota", "startDate", "endDate", "isActive"],
                 where: { merchantId },
                 include: [
                     {
