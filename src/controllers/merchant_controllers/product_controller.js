@@ -158,7 +158,7 @@ class MerchantProductController {
                         model: db.MerchantDiscounts,
                         as: 'discounts',
                         attributes: ['id', 'code', 'description', 'discountType', 'discountValue', 'startDate', 'endDate', 'isActive'],
-                        through: { attributes: [] },
+                        through: { attributes: ['merchantProductId', 'merchantDiscountId'] },
                         // where: { isActive: true },
                         required: false
                     },

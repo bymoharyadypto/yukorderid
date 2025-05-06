@@ -14,12 +14,12 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'merchantId',
         as: 'merchant'
       });
-      MerchantDiscounts.belongsToMany(models.MerchantProducts, {
-        through: 'MerchantDiscountProducts',
-        as: 'products',
-        foreignKey: 'merchantDiscountId',
-        otherKey: 'merchantProductId',
-      });
+      // MerchantDiscounts.belongsToMany(models.MerchantProducts, {
+      //   through: 'MerchantDiscountProducts',
+      //   as: 'products',
+      //   foreignKey: 'merchantDiscountId',
+      //   otherKey: 'merchantProductId',
+      // });
       // MerchantDiscounts.belongsToMany(models.MerchantProducts, {
       //   through: models.MerchantDiscountProducts,
       //   as: 'products',
@@ -31,6 +31,12 @@ module.exports = (sequelize, DataTypes) => {
         as: 'paymentMethods',
         foreignKey: 'merchantDiscountId',
         otherKey: 'paymentMethodId',
+      });
+      MerchantDiscounts.belongsToMany(models.MerchantProducts, {
+        // through: models.MerchantDiscountProducts,
+        through: 'MerchantDiscountProducts',
+        foreignKey: 'merchantDiscountId',
+        as: 'products'
       });
     }
   }
