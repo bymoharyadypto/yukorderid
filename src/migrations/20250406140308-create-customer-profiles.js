@@ -21,19 +21,10 @@ module.exports = {
       image: {
         type: Sequelize.STRING
       },
-      address: {
-        type: Sequelize.TEXT
+      birthDate: {
+        type: Sequelize.DATE
       },
-      district: {
-        type: Sequelize.STRING
-      },
-      city: {
-        type: Sequelize.STRING
-      },
-      province: {
-        type: Sequelize.STRING
-      },
-      postalCode: {
+      gender: {
         type: Sequelize.STRING
       },
       createdAt: {

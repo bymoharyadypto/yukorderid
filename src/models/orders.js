@@ -23,22 +23,24 @@ module.exports = (sequelize, DataTypes) => {
       //   foreignKey: 'orderId',
       //   as: 'orderPayments'
       // });
-      // Orders.hasMany(models.OrderShippingAddresses, {
-      //   foreignKey: 'orderId',
-      //   as: 'shippingAddresses'
-      // });
+      Orders.hasMany(models.OrderShippingAddresses, {
+        foreignKey: 'orderId',
+        as: 'shippingAddresses'
+      });
       Orders.hasMany(models.MerchantDiscounts, {
         foreignKey: 'merchantDiscountId',
         as: 'merchantDiscounts'
       });
-      // Orders.hasMany(models.OrderShippingMethods, {
-      //   foreignKey: 'orderId',
-      //   as: 'shippingMethods'
-      // });
+      Orders.hasMany(models.OrderShippingMethods, {
+        foreignKey: 'orderId',
+        as: 'shippingMethods'
+      });
+
     }
   }
   Orders.init({
     userId: DataTypes.INTEGER,
+    guestOrderInfoId: DataTypes.INTEGER,
     subtotalAmount: DataTypes.INTEGER,
     shippingCost: DataTypes.INTEGER,
     discountAmount: DataTypes.INTEGER,
