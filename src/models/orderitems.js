@@ -15,6 +15,18 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'merchantDiscountId',
         as: 'merchantDiscounts'
       });
+      OrderItems.belongsTo(models.Orders, {
+        foreignKey: 'orderId',
+        as: 'order'
+      });
+      OrderItems.belongsTo(models.MerchantProducts, {
+        foreignKey: 'productId',
+        as: 'product'
+      });
+      OrderItems.belongsTo(models.MerchantProductVariants, {
+        foreignKey: 'variantId',
+        as: 'variant'
+      });
     }
   }
   OrderItems.init({

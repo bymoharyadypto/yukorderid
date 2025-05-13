@@ -3,6 +3,7 @@ const MerchantController = require("../../controllers/merchant_controllers/merch
 const productRoutes = require("./product_routes")
 const discountRoutes = require("./discount_routes")
 const bankAccountRoutes = require("./bank_account_routes")
+const orderRoutes = require("./order_routes")
 
 router.get("/", MerchantController.getUserMerchants)
 router.get("/:merchantId", MerchantController.getUserMerchant)
@@ -10,6 +11,7 @@ router.put("/:merchantId", MerchantController.updateMerchantWithOperatingHours)
 router.use("/:merchantId/products", productRoutes)
 router.use("/:merchantId/discounts", discountRoutes);
 router.use("/:merchantId/bank-accounts", bankAccountRoutes)
+router.use("/:merchantId/customer-orders", orderRoutes)
 
 
 module.exports = router;

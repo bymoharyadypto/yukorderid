@@ -41,6 +41,7 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'merchantProductId',
         as: 'discounts'
       });
+      MerchantProducts.hasMany(models.MerchantProductVariantOptions, { foreignKey: 'merchantProductId', as: 'variantOptions' });
     }
   }
   MerchantProducts.init({
@@ -49,7 +50,12 @@ module.exports = (sequelize, DataTypes) => {
     description: DataTypes.TEXT,
     price: DataTypes.INTEGER,
     crossedPrice: DataTypes.INTEGER,
-    stock: DataTypes.INTEGER,
+    stock: {
+      type: DataTypes.INTEGER,
+      validate: {
+        min: 0
+      }
+    },
     isPreOrder: DataTypes.BOOLEAN,
     preOrderDays: DataTypes.INTEGER,
     isActive: DataTypes.BOOLEAN

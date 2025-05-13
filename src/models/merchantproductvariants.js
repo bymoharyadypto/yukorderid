@@ -15,10 +15,11 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: 'merchantProductId',
         as: 'product'
       });
-      MerchantProductVariants.hasMany(models.MerchantProductVariantOptions, {
-        foreignKey: 'merchantProductVariantId',
-        as: 'options'
-      });
+      // MerchantProductVariants.hasMany(models.MerchantProductVariantOptions, {
+      //   foreignKey: 'merchantProductVariantId',
+      //   as: 'options'
+      // });
+      MerchantProductVariants.hasMany(models.MerchantProductVariantOptionValues, { foreignKey: 'merchantProductVariantId' });
     }
   }
   MerchantProductVariants.init({

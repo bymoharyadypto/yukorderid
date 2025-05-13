@@ -336,7 +336,7 @@ class UserController {
     static async registerUserCustomer(req, res) {
         const transaction = await db.sequelize.transaction();
         try {
-            const { name, email, address, city, province, postalCode } = req.body;
+            const { name, email, address, district, city, province, postalCode, isPrimary } = req.body;
 
             if (!name || !email) {
                 throw { status: 400, message: "Nama dan Email wajib diisi" };
@@ -373,11 +373,19 @@ class UserController {
 
             await db.CustomerProfiles.create({
                 userId: existingUser.id,
-                address,
-                city,
+            }, { transaction });
+
+            await db.CustomerAddresses.create({
+                userId: existingUser.id,
+                label: req.body.label || 'Home',
+                recipientName: existingUser.name,
+                phoneNumber: existingUser.phoneNumber,
                 province,
+                city,
+                district,
                 postalCode,
-                image: null
+                fullAddress: address,
+                isPrimary: isPrimary || false,
             }, { transaction });
 
             const existingToken = await db.RefreshTokens.findOne({
@@ -396,7 +404,7 @@ class UserController {
                 include: { model: db.Roles, as: 'role' }
             });
 
-            console.log(updatedUser);
+            // console.log(updatedUser);
 
 
             const accessToken = await signAccessTokenForCustomer(updatedUser);
@@ -423,7 +431,7 @@ class UserController {
     }
 
 
-    static async getUserProfile(req, res) {
+    static async getUserMerchantProfile(req, res) {
         try {
             const userId = req.user.id;
 
@@ -480,6 +488,41 @@ class UserController {
         }
     }
 
+    static async getUserCustomerProfile(req, res) {
+        try {
+            const userId = req.user.id;
+
+            const user = await db.Users.findByPk(userId, {
+                attributes: ['id', 'name', 'email', 'phoneNumber', 'isVerified'],
+                include: [
+                    {
+                        model: db.CustomerProfiles,
+                        as: 'customerProfile',
+                        attributes: ['image', 'birthDate', 'gender']
+                    },
+                    {
+                        model: db.CustomerAddresses,
+                        as: 'customerAddresses',
+                        where: { isPrimary: true },
+                        required: false, // agar tetap jalan meskipun belum punya alamat
+                        attributes: ['label', 'recipientName', 'phoneNumber', 'province', 'city', 'district', 'postalCode', 'fullAddress', 'isPrimary']
+                    }
+                ]
+            });
+
+            if (!user) {
+                return res.status(404).json({ message: "User tidak ditemukan" });
+            }
+
+            return res.status(200).json({
+                message: "Data profil user berhasil diambil",
+                data: user
+            });
+        } catch (err) {
+            console.error(err);
+            return res.status(500).json({ message: "Gagal mengambil data profil user" });
+        }
+    }
 }
 
 

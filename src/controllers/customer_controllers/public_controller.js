@@ -76,14 +76,26 @@ class PublicController {
                         model: db.MerchantProductVariants,
                         as: 'variants',
                         attributes: ['id', 'name'],
+                    },
+                    {
+                        model: db.MerchantProductVariantOptions,
+                        as: 'variantOptions',
+                        attributes: ['id', 'price', 'crossedPrice', 'stock', 'isActive'],
                         include: [
                             {
-                                model: db.MerchantProductVariantOptions,
-                                as: 'options',
-                                attributes: ['id', 'value', 'price', 'crossedPrice', 'stock', 'isActive']
+                                model: db.MerchantProductVariantOptionValues,
+                                as: 'optionValues',
+                                attributes: ['id', 'value'],
+                                include: [
+                                    {
+                                        model: db.MerchantProductVariants,
+                                        as: 'variant',
+                                        attributes: ['id', 'name']
+                                    }
+                                ]
                             }
                         ]
-                    }
+                    },
                 ],
                 order: [['createdAt', 'DESC']]
             });

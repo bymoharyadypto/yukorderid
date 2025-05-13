@@ -1,3 +1,6 @@
+const db = require('../models');
+const { Op } = require('sequelize');
+
 function transformDataArray(sourceArray, mappings) {
     if (!Array.isArray(sourceArray)) return [];
 
@@ -11,6 +14,27 @@ function transformDataArray(sourceArray, mappings) {
     );
 }
 
+async function getShippingRateByLocation(merchantId, city, province, courier = 'JNE', service = 'REG') {
+    const rate = await db.MerchantShippingRates.findOne({
+        where: {
+            merchantId,
+            courierName: courier,
+            serviceType: service,
+            [Op.or]: [
+                { city: city },
+                { province: province, city: null },
+                { province: null, city: null }
+            ]
+        },
+        order: [
+            ['city', 'DESC NULLS LAST'],
+            ['province', 'DESC NULLS LAST']
+        ]
+    });
+
+    return rate;
+}
+
 module.exports = {
-    transformDataArray,
+    transformDataArray, getShippingRateByLocation
 };

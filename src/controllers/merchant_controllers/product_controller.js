@@ -16,7 +16,8 @@ class MerchantProductController {
                 isActive,
                 imageUrls,
                 categories,
-                variants
+                variants,
+                variantOptions
             } = req.body;
 
             if (!name || !description || !imageUrls?.length || !merchantId) {
@@ -84,22 +85,56 @@ class MerchantProductController {
             await db.MerchantProductCategories.bulkCreate(categoryData, { transaction });
 
             if (hasVariants) {
+                const variantMap = {};
+                // for (const variant of variants) {
+                //     const variantRecord = await db.MerchantProductVariants.create({
+                //         merchantProductId: product.id,
+                //         name: variant.name
+                //     }, { transaction });
+
+                //     if (Array.isArray(variant.options)) {
+                //         const optionData = variant.options.map(option => ({
+                //             merchantProductVariantId: variantRecord.id,
+                //             value: option.value,
+                //             price: option.price,
+                //             crossedPrice: option.crossedPrice,
+                //             stock: option.stock,
+                //             isActive: option.isActive
+                //         }));
+                //         await db.MerchantProductVariantOptions.bulkCreate(optionData, { transaction });
+                //     }
+                // }
                 for (const variant of variants) {
                     const variantRecord = await db.MerchantProductVariants.create({
                         merchantProductId: product.id,
                         name: variant.name
                     }, { transaction });
 
-                    if (Array.isArray(variant.options)) {
-                        const optionData = variant.options.map(option => ({
-                            merchantProductVariantId: variantRecord.id,
-                            value: option.value,
-                            price: option.price,
-                            crossedPrice: option.crossedPrice,
-                            stock: option.stock,
-                            isActive: option.isActive
-                        }));
-                        await db.MerchantProductVariantOptions.bulkCreate(optionData, { transaction });
+                    for (const value of variant.values) {
+                        variantMap[`${variant.name}:${value}`] = variantRecord.id;
+                    }
+                }
+
+                for (const option of variantOptions) {
+                    const optionRecord = await db.MerchantProductVariantOptions.create({
+                        merchantProductId: product.id,
+                        price: option.price,
+                        crossedPrice: option.crossedPrice,
+                        stock: option.stock,
+                        isActive: option.isActive
+                    }, { transaction });
+
+                    for (const value of option.values) {
+                        const matchedVariant = Object.entries(variantMap).find(([key]) => key.endsWith(`:${value}`));
+                        if (!matchedVariant) continue;
+
+                        const [key, merchantProductVariantId] = matchedVariant;
+
+                        await db.MerchantProductVariantOptionValues.create({
+                            merchantProductVariantOptionId: optionRecord.id,
+                            merchantProductVariantId,
+                            value
+                        }, { transaction });
                     }
                 }
             }
@@ -146,11 +181,23 @@ class MerchantProductController {
                         model: db.MerchantProductVariants,
                         attributes: ['id', 'name'],
                         as: 'variants',
+                    },
+                    {
+                        model: db.MerchantProductVariantOptions,
+                        as: 'variantOptions',
+                        attributes: ['id', 'price', 'crossedPrice', 'stock', 'isActive'],
                         include: [
                             {
-                                model: db.MerchantProductVariantOptions,
-                                as: 'options',
-                                attributes: ['id', 'value', 'price', 'crossedPrice', 'stock', 'isActive']
+                                model: db.MerchantProductVariantOptionValues,
+                                as: 'optionValues',
+                                attributes: ['id', 'value'],
+                                include: [
+                                    {
+                                        model: db.MerchantProductVariants,
+                                        as: 'variant',
+                                        attributes: ['id', 'name']
+                                    }
+                                ]
                             }
                         ]
                     },
@@ -203,11 +250,23 @@ class MerchantProductController {
                         model: db.MerchantProductVariants,
                         attributes: ['id', 'name'],
                         as: 'variants',
+                    },
+                    {
+                        model: db.MerchantProductVariantOptions,
+                        as: 'variantOptions',
+                        attributes: ['id', 'price', 'crossedPrice', 'stock', 'isActive'],
                         include: [
                             {
-                                model: db.MerchantProductVariantOptions,
-                                as: 'options',
-                                attributes: ['id', 'value', 'price', 'crossedPrice', 'stock', 'isActive']
+                                model: db.MerchantProductVariantOptionValues,
+                                as: 'optionValues',
+                                attributes: ['id', 'value'],
+                                include: [
+                                    {
+                                        model: db.MerchantProductVariants,
+                                        as: 'variant',
+                                        attributes: ['id', 'name']
+                                    }
+                                ]
                             }
                         ]
                     },
@@ -250,7 +309,8 @@ class MerchantProductController {
                 isActive,
                 imageUrls,
                 categories,
-                variants
+                variants,
+                variantOptions
             } = req.body;
 
             if (!name || !description || !imageUrls?.length || !merchantId || !merchantProductId) {
@@ -334,27 +394,76 @@ class MerchantProductController {
             }
 
             if (hasVariants) {
+                const variantOptionIds = await db.MerchantProductVariantOptions.findAll({
+                    attributes: ['id'],
+                    raw: true,
+                    transaction
+                });
+                const optionIds = variantOptionIds.map(v => v.id);
+
+                // Step 2: Hapus OptionValues
+                if (optionIds.length > 0) {
+                    await db.MerchantProductVariantOptionValues.destroy({
+                        where: {
+                            merchantProductVariantOptionId: optionIds
+                        },
+                        transaction
+                    });
+                }
+                await db.MerchantProductVariantOptions.destroy({
+                    where: { merchantProductId: product.id },
+                    transaction
+                });
+                // await db.MerchantProductVariantOptionValues.destroy({
+                //     where: { merchantProductId: product.id },
+                //     transaction
+                // });
                 await db.MerchantProductVariants.destroy({
                     where: { merchantProductId: product.id },
                     transaction
                 });
+
+                const variantMap = {};
                 for (const variant of variants) {
-                    const variantRecord = await db.MerchantProductVariants.create({
+                    // const variantRecord = await db.MerchantProductVariants.create({
+                    //     merchantProductId: product.id,
+                    //     name: variant.name
+                    // }, { transaction });
+
+                    // if (Array.isArray(variant.options)) {
+                    //     const optionData = variant.options.map(option => ({
+                    //         merchantProductVariantId: variantRecord.id,
+                    //         value: option.value,
+                    //         price: option.price,
+                    //         crossedPrice: option.crossedPrice,
+                    //         stock: option.stock,
+                    //         isActive: option.isActive
+                    //     }));
+                    //     await db.MerchantProductVariantOptions.bulkCreate(optionData, { transaction });
+                    // }
+                    const newVariant = await db.MerchantProductVariants.create({
                         merchantProductId: product.id,
                         name: variant.name
                     }, { transaction });
+                    variantMap[variant.name] = newVariant.id;
+                }
+                for (const option of variantOptions) {
+                    const newOption = await db.MerchantProductVariantOptions.create({
+                        merchantProductId: product.id,
+                        price: option.price,
+                        crossedPrice: option.crossedPrice,
+                        stock: option.stock,
+                        isActive: option.isActive
+                    }, { transaction });
 
-                    if (Array.isArray(variant.options)) {
-                        const optionData = variant.options.map(option => ({
-                            merchantProductVariantId: variantRecord.id,
-                            value: option.value,
-                            price: option.price,
-                            crossedPrice: option.crossedPrice,
-                            stock: option.stock,
-                            isActive: option.isActive
-                        }));
-                        await db.MerchantProductVariantOptions.bulkCreate(optionData, { transaction });
-                    }
+                    const optionValueData = option.values.map(val => ({
+                        merchantProductVariantOptionId: newOption.id,
+                        merchantProductId: product.id,
+                        merchantProductVariantId: variantMap[val.variantName],
+                        value: val.value
+                    }));
+
+                    await db.MerchantProductVariantOptionValues.bulkCreate(optionValueData, { transaction });
                 }
             }
 

@@ -20,9 +20,6 @@ module.exports = {
       subtotalAmount: {
         type: Sequelize.INTEGER
       },
-      shippingCost: {
-        type: Sequelize.INTEGER
-      },
       discountAmount: {
         type: Sequelize.INTEGER
       },

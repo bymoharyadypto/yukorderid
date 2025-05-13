@@ -11,18 +11,25 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      MerchantProductVariantOptions.belongsTo(models.MerchantProductVariants, {
-        foreignKey: 'merchantProductVariantId',
-        as: 'variant'
-      });
+      // MerchantProductVariantOptions.belongsTo(models.MerchantProductVariants, {
+      //   foreignKey: 'merchantProductVariantId',
+      //   as: 'variant'
+      // });
+      MerchantProductVariantOptions.belongsTo(models.MerchantProducts, { foreignKey: 'merchantProductId' });
+      MerchantProductVariantOptions.hasMany(models.MerchantProductVariantOptionValues, { foreignKey: 'merchantProductVariantOptionId', as: 'optionValues', });
     }
   }
   MerchantProductVariantOptions.init({
-    merchantProductVariantId: DataTypes.INTEGER,
+    merchantProductId: DataTypes.INTEGER,
     value: DataTypes.STRING,
     price: DataTypes.INTEGER,
     crossedPrice: DataTypes.INTEGER,
-    stock: DataTypes.INTEGER,
+    stock: {
+      type: DataTypes.INTEGER,
+      validate: {
+        min: 0
+      }
+    },
     isActive: DataTypes.BOOLEAN
 
   }, {
