@@ -54,13 +54,8 @@ class MerchantDiscountController {
                 isAllPayments
             } = req.body;
 
-            // console.log('req.body', req.body);
-
             const { merchantId } = req.params;
-            // const userId = req.user?.id;
             const merchantIds = req.user?.merchantIds;
-            // console.log('merchantIds', merchantIds);
-
 
             if (!merchantId || isNaN(Number(merchantId))) {
                 return res.status(400).json({ message: 'Parameter merchantId tidak valid' });
@@ -86,10 +81,8 @@ class MerchantDiscountController {
                 isAllPayments,
                 isActive: false
             },
-                { transaction }
+                { transaction, logging: console.log }
             );
-
-            // console.log(discount, "discount");
 
             let finalProductIds = [];
             if (isAllProducts === true) {
@@ -130,7 +123,7 @@ class MerchantDiscountController {
             }
 
             await transaction.commit();
-            return res.status(201).json({ message: 'Diskon berhasil dibuat', data: discount });
+            return res.status(201).json({ message: 'Diskon berhasil dibuat' });
 
             // const discount = await db.MerchantDiscounts.create({
             //     merchantId: parsedMerchantId,
@@ -162,7 +155,7 @@ class MerchantDiscountController {
             // await transaction.commit();
             // return res.status(201).json({ message: 'Diskon berhasil dibuat', data: discount });
         } catch (error) {
-            // await transaction.rollback();
+            await transaction.rollback();
             console.error(error);
             return res.status(500).json({ message: 'Gagal membuat diskon', error: error.message });
         }
@@ -193,18 +186,25 @@ class MerchantDiscountController {
             //     ]
             // });
             const discounts = await db.MerchantDiscounts.findAll({
-                // attributes: ["id", "code", "description", "discountType", "discountValue", "budgetPerTransaction", "quota", "startDate", "endDate", "isActive"],
+                attributes: ["id", "code", "description", "discountType", "discountValue", "budgetPerTransaction", "quota", "startDate", "endDate", "isActive"],
                 where: { merchantId },
                 include: [
                     {
                         model: db.MerchantProducts,
                         as: 'products',
                         attributes: ['id', 'name', 'price', 'stock', 'isActive'],
+                        // through: { attributes: ['merchantProductId', 'merchantDiscountId'] },
                         through: { attributes: [] },
                         where: {
                             isActive: true
                         },
                         required: false
+                    },
+                    {
+                        model: db.PaymentMethods,
+                        as: 'paymentMethods',
+                        attributes: ['id', 'name', 'type', 'provider'],
+                        through: { attributes: [] }
                     }
                 ],
                 order: [

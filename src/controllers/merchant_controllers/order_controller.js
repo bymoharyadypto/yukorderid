@@ -375,14 +375,8 @@ class OrderController {
         const t = await db.sequelize.transaction();
         try {
             const merchantId = req.user.merchantId;
-            const {
-                orderId,
-                courierName,
-                serviceType,
-                // shippingCost,
-                etd,
-                trackingNumber
-            } = req.body;
+            const { orderId } = req.params;
+            const { courierName, trackingNumber, shippedAt } = req.body;
 
             // if (!courierName || !serviceType || !shippingCost || !etd || !trackingNumber) {
             //     throw new Error('Semua informasi pengiriman wajib diisi');
@@ -474,18 +468,18 @@ class OrderController {
             // }, { transaction: t });
 
             await shipping.update({
-                // courierName,
+                courierName,
                 // serviceType,
                 // etd,
                 trackingNumber,
-                shippedAt: new Date()
+                shippedAt
             }, { transaction: t });
 
             await db.OrderStatusHistories.create({
                 orderId,
                 status: 'Shipped',
                 changeAt: new Date(),
-                notes: `Dikirim oleh merchant ${merchantId} via ${courierName} - ${serviceType}, Resi: ${trackingNumber}`
+                notes: `Dikirim Tanggal ${shippedAt}, oleh merchant ${merchantId} via ${courierName} - ${shipping.serviceType}, Resi: ${trackingNumber}`
             }, { transaction: t });
 
             const allShipping = await db.OrderShippingMethods.findAll({
