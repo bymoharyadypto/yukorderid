@@ -7,6 +7,14 @@ module.exports = (sequelize, DataTypes) => {
 
     static associate(models) {
       // define association here
+      MerchantDiscountProducts.belongsTo(models.MerchantDiscounts, {
+        foreignKey: 'merchantDiscountId',
+        as: 'discount'
+      });
+      MerchantDiscountProducts.belongsTo(models.MerchantProducts, {
+        foreignKey: 'merchantProductId',
+        as: 'product'
+      });
     }
   }
   MerchantDiscountProducts.init({

@@ -12,7 +12,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       // define association here
       Payments.belongsTo(models.PaymentMethods, { foreignKey: 'paymentMethodId', as: 'method' });
-      Payments.hasOne(models.PaymentVerifications, { foreignKey: 'paymentId', as: 'verification' });
+      Payments.hasOne(models.PaymentVerifications, { foreignKey: 'paymentId', as: 'verifications' });
       Payments.hasOne(models.MerchantSubscriptions, { foreignKey: 'orderId', as: 'subscription' });
     }
   }

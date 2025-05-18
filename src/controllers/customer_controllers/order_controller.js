@@ -1,6 +1,6 @@
 const db = require('../../models')
 const { getShippingRateByLocation } = require('../../utils/utils');
-
+const { Op } = require('sequelize');
 class OrderController {
     static async createOrder(req, res) {
         const t = await db.sequelize.transaction();
@@ -127,6 +127,45 @@ class OrderController {
                 }
             }
 
+            // if (voucherCode) {
+            //     const discount = await db.MerchantDiscounts.findOne({
+            //         where: {
+            //             code: voucherCode,
+            //             isActive: true,
+            //             startDate: { [Op.lte]: new Date() },
+            //             endDate: { [Op.gte]: new Date() }
+            //         },
+            //         // include: voucherCode ? [{ model: db.MerchantDiscountProducts, as: 'product' }] : []
+            //         include: [
+            //             {
+            //                 model: db.MerchantProducts,
+            //                 as: 'products',
+            //                 through: { attributes: [] }
+            //             }
+            //         ]
+            //     });
+
+            //     if (!discount) throw new Error('Voucher tidak ditemukan atau tidak aktif');
+
+            //     const appliesToAll = discount.isAllProducts;
+            //     // const applicableProducts = discount.MerchantDiscountProducts.map(p => p.merchantProductId);
+            //     const applicableProducts = discount.products.map(p => p.id);
+
+            //     for (const item of itemDetails) {
+            //         const isApplicable = appliesToAll || applicableProducts.includes(item.productId);
+            //         if (isApplicable) {
+            //             const discValue = discount.discountType === 'percentage'
+            //                 ? item.total * (discount.discountValue / 100)
+            //                 : discount.discountValue;
+
+            //             const finalDiscount = Math.min(discValue, discount.budgetPerTransaction || discValue);
+            //             discountAmount += finalDiscount;
+            //             item.merchantDiscountId = discount.id;
+            //         }
+            //     }
+
+            //     merchantDiscountId = discount.id;
+            // }
             if (voucherCode) {
                 const discount = await db.MerchantDiscounts.findOne({
                     where: {
@@ -135,22 +174,42 @@ class OrderController {
                         startDate: { [Op.lte]: new Date() },
                         endDate: { [Op.gte]: new Date() }
                     },
-                    include: voucherCode ? [{ model: MerchantDiscountProducts }] : []
+                    include: [
+                        {
+                            model: db.MerchantProducts,
+                            as: 'products',
+                            through: { attributes: [] }
+                        },
+                        {
+                            model: db.PaymentMethods,
+                            as: 'paymentMethods',
+                            through: { attributes: [] }
+                        }
+                    ]
                 });
 
-                if (!discount) throw new Error('Voucher tidak ditemukan atau tidak aktif');
+                if (!discount) {
+                    throw new Error('Voucher tidak ditemukan atau tidak aktif');
+                }
+
+                if (!discount.isAllPayments) {
+                    const allowedPaymentMethodIds = discount.paymentMethods.map(pm => pm.id);
+                    if (!allowedPaymentMethodIds.includes(paymentMethodId)) {
+                        throw new Error('Voucher tidak berlaku untuk metode pembayaran yang dipilih');
+                    }
+                }
 
                 const appliesToAll = discount.isAllProducts;
-                const applicableProducts = discount.MerchantDiscountProducts.map(p => p.merchantProductId);
+                const applicableProducts = discount.products.map(p => p.id);
 
                 for (const item of itemDetails) {
                     const isApplicable = appliesToAll || applicableProducts.includes(item.productId);
                     if (isApplicable) {
-                        const discValue = discount.discountType === 'percentage'
+                        const rawDiscountValue = discount.discountType === 'percentage'
                             ? item.total * (discount.discountValue / 100)
                             : discount.discountValue;
 
-                        const finalDiscount = Math.min(discValue, discount.budgetPerTransaction || discValue);
+                        const finalDiscount = Math.min(rawDiscountValue, discount.budgetPerTransaction || rawDiscountValue);
                         discountAmount += finalDiscount;
                         item.merchantDiscountId = discount.id;
                     }
@@ -158,6 +217,7 @@ class OrderController {
 
                 merchantDiscountId = discount.id;
             }
+
 
             const totalAmount = subtotal - discountAmount + shippingTotal;
 
@@ -201,7 +261,8 @@ class OrderController {
                 paymentMethodId: selectedPaymentMethod.id,
                 paymentChannel: selectedPaymentMethod.name,
                 amount: totalAmount,
-                status: 'Pending'
+                status: 'Paid',
+                paidAt: new Date()
             }, { transaction: t });
 
             if (transferProofUrl) {
@@ -303,7 +364,7 @@ class OrderController {
                             },
                             {
                                 model: db.PaymentVerifications,
-                                as: 'verification'
+                                as: 'verifications'
                             }
                         ]
                     },
@@ -317,7 +378,7 @@ class OrderController {
                         include: [
                             {
                                 model: db.Merchants,
-                                attributes: ['id', 'name'],
+                                attributes: ['id', 'storeName'],
                                 as: 'merchant'
                             }
                         ]

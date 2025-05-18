@@ -1,5 +1,5 @@
 const db = require('../models');
-const { Op } = require('sequelize');
+const { Op, literal } = require('sequelize');
 
 function transformDataArray(sourceArray, mappings) {
     if (!Array.isArray(sourceArray)) return [];
@@ -26,9 +26,15 @@ async function getShippingRateByLocation(merchantId, city, province, courier = '
                 { province: null, city: null }
             ]
         },
+        // order: [
+        //     ['city', 'DESC NULLS LAST'],
+        //     ['province', 'DESC NULLS LAST']
+        // ]
         order: [
-            ['city', 'DESC NULLS LAST'],
-            ['province', 'DESC NULLS LAST']
+            [literal('city IS NULL'), 'ASC'],
+            ['city', 'DESC'],
+            [literal('province IS NULL'), 'ASC'],
+            ['province', 'DESC']
         ]
     });
 

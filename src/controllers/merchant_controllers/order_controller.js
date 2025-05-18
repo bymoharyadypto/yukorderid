@@ -88,7 +88,7 @@ class OrderController {
                             },
                             {
                                 model: db.PaymentVerifications,
-                                as: 'verification'
+                                as: 'verifications'
                             }
                         ]
                     },
@@ -102,7 +102,7 @@ class OrderController {
                         include: [
                             {
                                 model: db.Merchants,
-                                attributes: ['id', 'name'],
+                                attributes: ['id', 'storeName'],
                                 as: 'merchant'
                             }
                         ]
@@ -216,7 +216,7 @@ class OrderController {
                             },
                             {
                                 model: db.PaymentVerifications,
-                                as: 'verification'
+                                as: 'verifications'
                             }
                         ]
                     },
@@ -230,7 +230,7 @@ class OrderController {
                         include: [
                             {
                                 model: db.Merchants,
-                                attributes: ['id', 'name'],
+                                attributes: ['id', 'storeName'],
                                 as: 'merchant'
                             }
                         ]
@@ -263,7 +263,7 @@ class OrderController {
     static async processCustomerOrderForMerchant(req, res) {
         const t = await db.sequelize.transaction();
         try {
-            const merchantId = req.user.merchantId;
+            const merchantId = req.user.merchantIds;
             const staffId = req.user.id;
             const { orderId } = req.params;
 
@@ -288,15 +288,18 @@ class OrderController {
                     }
                 ],
                 transaction: t,
-                lock: t.LOCK.UPDATE
+                // lock: t.LOCK.UPDATE
             });
 
             if (!order) throw new Error('Order tidak ditemukan untuk merchant ini');
             const payment = order.payments;
 
-            if (!payment || payment.status !== 'Pending') {
-                throw new Error('Pembayaran tidak dalam status Pending, tidak bisa diproses');
-            }
+            // if (!payment || payment.status !== 'Pending') {
+            //     throw new Error('Pembayaran tidak dalam status Pending, tidak bisa diproses');
+            // }
+            // if (!payment || payment.status !== 'Paid') {
+            //     throw new Error('Pembayaran tidak dalam status Paid, tidak bisa diproses');
+            // }
 
             const items = order.orderItems;
             for (const item of items) {
@@ -306,7 +309,7 @@ class OrderController {
                 const productRow = await db.MerchantProducts.findOne({
                     where: { id: product.id },
                     transaction: t,
-                    lock: t.LOCK.UPDATE
+                    // lock: t.LOCK.UPDATE
                 });
 
                 if (!productRow || !productRow.isActive || productRow.stock < quantity) {
@@ -317,7 +320,7 @@ class OrderController {
                     const variantOption = await db.MerchantProductVariantOptions.findOne({
                         where: { id: item.variantOptionId },
                         transaction: t,
-                        lock: t.LOCK.UPDATE
+                        // lock: t.LOCK.UPDATE
                     });
 
                     if (!variantOption || variantOption.stock < quantity) {
@@ -366,6 +369,7 @@ class OrderController {
             await t.commit();
             return res.status(200).json({ message: 'Order berhasil diproses dan pembayaran dikonfirmasi' });
         } catch (error) {
+            console.log(error);
             await t.rollback();
             return res.status(400).json({ error: error.message });
         }

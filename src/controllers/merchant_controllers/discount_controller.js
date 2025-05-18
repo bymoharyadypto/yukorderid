@@ -162,7 +162,7 @@ class MerchantDiscountController {
     }
 
     static async getDiscounts(req, res) {
-        console.log('getDiscounts called');
+        // console.log('getDiscounts called');
 
         try {
             // const merchantId = req.login.merchantId;
