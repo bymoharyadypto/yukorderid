@@ -18,10 +18,11 @@ function requiredEnv(key) {
 module.exports = {
     development: {
         username: requiredEnv('DB_DEV_USERNAME'),
-        password: requiredEnv('DB_DEV_PASSWORD'),
+        // password: requiredEnv('DB_DEV_PASSWORD'),
+        password: null,
         database: requiredEnv('DB_DEV_NAME'),
         host: requiredEnv('DB_DEV_HOST'),
-        dialect: "postgres",
+        dialect: "mysql",
         port: Number(requiredEnv('DB_DEV_PORT'))
     },
     production: {
