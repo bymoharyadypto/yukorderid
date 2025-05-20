@@ -22,22 +22,93 @@ class OrderController {
             const itemDetails = [];
             const productsMap = {};
 
+            // for (const item of items) {
+            //     const product = await db.MerchantProducts.findByPk(item.productId);
+
+            //     if (!product || !product.isActive || product.stock < item.quantity) {
+            //         throw new Error(`Produk tidak tersedia atau stok tidak cukup: ${product?.name || item.productId}`);
+            //     }
+
+            //     productsMap[item.productId] = product;
+
+            //     let price = product.price;
+            //     let variantStock = product.stock;
+
+            //     if (item.variantOptionId) {
+            //         const variantOption = await db.MerchantProductVariantOptions.findOne({
+            //             where: {
+            //                 id: item.variantOptionId
+            //             },
+            //             include: [
+            //                 {
+            //                     model: db.MerchantProductVariantOptionValues,
+            //                     as: 'optionValues',
+            //                     attributes: ['id', 'value'],
+            //                     include: [
+            //                         {
+            //                             model: db.MerchantProductVariants,
+            //                             as: 'variant',
+            //                             attributes: ['id', 'name']
+            //                         }
+            //                     ]
+            //                 }
+            //             ]
+            //         });
+
+            //         if (!variantOption) {
+            //             throw new Error(`Opsi varian tidak ditemukan untuk produk ${product.name}`);
+            //         }
+
+            //         price = variantOption.price || product.price;
+            //         variantStock = variantOption.stock;
+
+            //         if (variantStock < item.quantity) {
+            //             const variantLabels = variantOption.optionValues.map(ov =>
+            //                 `${ov.variant?.name}: ${ov.value}`
+            //             ).join(', ');
+
+            //             throw new Error(`Stok tidak cukup untuk varian ${variantLabels} dari ${product.name}`);
+            //         }
+            //     } else {
+            //         if (product.stock < item.quantity) {
+            //             throw new Error(`Stok tidak cukup untuk produk ${product.name}`);
+            //         }
+            //     }
+
+            //     // const total = product.price * item.quantity;
+            //     // subtotal += total;
+            //     const effectivePrice = price || product.price;
+            //     const total = effectivePrice * item.quantity;
+            //     subtotal += total;
+
+            //     itemDetails.push({
+            //         productId: item.productId,
+            //         variantOptionId: item.variantOptionId || null,
+            //         quantity: item.quantity,
+            //         price: price,
+            //         total,
+            //         merchantDiscountId: null,
+            //         isPreOrder: product.isPreOrder
+            //     });
+            // }
             for (const item of items) {
                 const product = await db.MerchantProducts.findByPk(item.productId);
 
-                if (!product || !product.isActive || product.stock < item.quantity) {
-                    throw new Error(`Produk tidak tersedia atau stok tidak cukup: ${product?.name || item.productId}`);
+                if (!product || !product.isActive) {
+                    throw new Error(`Produk tidak tersedia: ${product?.name || item.productId}`);
                 }
 
                 productsMap[item.productId] = product;
 
                 let price = product.price;
+                let crossedPrice = product.crossedPrice;
                 let variantStock = product.stock;
 
                 if (item.variantOptionId) {
                     const variantOption = await db.MerchantProductVariantOptions.findOne({
                         where: {
-                            id: item.variantOptionId
+                            id: item.variantOptionId,
+                            productId: item.productId
                         },
                         include: [
                             {
@@ -59,7 +130,8 @@ class OrderController {
                         throw new Error(`Opsi varian tidak ditemukan untuk produk ${product.name}`);
                     }
 
-                    price = variantOption.price || product.price;
+                    price = variantOption.price ?? product.price;
+                    crossedPrice = variantOption.crossedPrice ?? product.crossedPrice;
                     variantStock = variantOption.stock;
 
                     if (variantStock < item.quantity) {
@@ -75,9 +147,8 @@ class OrderController {
                     }
                 }
 
-                // const total = product.price * item.quantity;
-                // subtotal += total;
-                const effectivePrice = price || product.price;
+                // const effectivePrice = price;
+                const effectivePrice = crossedPrice !== null && crossedPrice !== undefined ? crossedPrice : price;
                 const total = effectivePrice * item.quantity;
                 subtotal += total;
 
@@ -91,6 +162,7 @@ class OrderController {
                     isPreOrder: product.isPreOrder
                 });
             }
+
 
             let discountAmount = 0;
             let merchantDiscountId = null;

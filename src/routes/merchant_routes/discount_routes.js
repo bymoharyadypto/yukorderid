@@ -4,6 +4,6 @@ const DiscountController = require("../../controllers/merchant_controllers/disco
 router.get("/payment-methods", DiscountController.getPaymentMethods)
 router.post("/", DiscountController.createDiscount)
 router.get("/", DiscountController.getDiscounts)
-// router.patch("/:merchantDiscountId/status", DiscountController.updateDiscountStatus)
+router.patch("/:merchantDiscountId/status", DiscountController.updateDiscountStatus)
 
 module.exports = router;
