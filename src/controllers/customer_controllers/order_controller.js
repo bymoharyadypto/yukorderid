@@ -2,6 +2,246 @@ const db = require('../../models')
 const { getShippingRateByLocation } = require('../../utils/utils');
 const { Op } = require('sequelize');
 class OrderController {
+
+    static async getMerchantDiscounts(req, res) {
+        try {
+            const subdomain = req.params.subdomain;
+            const merchant = await db.Merchants.findOne({
+                where: { subdomain, isActive: true }
+            });
+
+            if (!merchant) {
+                return res.status(404).json({ message: 'Toko tidak ditemukan.' });
+            }
+
+            const merchantId = merchant.id;
+
+            const discounts = await db.MerchantDiscounts.findAll({
+                attributes: ["id", "code", "description", "discountType", "discountValue", "budgetPerTransaction", "quota", "startDate", "endDate", "isActive"],
+                where: { merchantId },
+                include: [
+                    {
+                        model: db.MerchantProducts,
+                        as: 'products',
+                        attributes: ['id', 'name', 'price', 'stock', 'isActive'],
+                        through: { attributes: [] },
+                        where: {
+                            isActive: true
+                        },
+                        required: false
+                    },
+                    {
+                        model: db.PaymentMethods,
+                        as: 'paymentMethods',
+                        attributes: ['id', 'name', 'type', 'provider'],
+                        through: { attributes: [] }
+                    }
+                ],
+                order: [
+                    ['createdAt', 'DESC']
+                ],
+            });
+
+            if (!discounts || discounts.length === 0) {
+                return res.status(404).json({ message: 'Tidak ada diskon yang ditemukan untuk merchant ini' });
+            }
+
+            return res.status(200).json({ data: discounts });
+        } catch (err) {
+            console.log('Error fetching discounts:', err);
+            console.error(err);
+            return res.status(500).json({ message: 'Gagal mengambil data diskon', error: err.message });
+        }
+    }
+    static async previewOrder(req, res) {
+        try {
+            const userId = req.user.id;
+            const { items, voucherCode, paymentMethodId } = req.body;
+            const subdomain = req.params.subdomain;
+
+            const merchant = await db.Merchants.findOne({
+                where: { subdomain, isActive: true }
+            });
+
+            if (!merchant) {
+                throw new Error('Merchant tidak ditemukan');
+            }
+            if (!Array.isArray(items) || items.length === 0) {
+                throw new Error('Item order tidak boleh kosong');
+            }
+
+            let subtotal = 0;
+            const itemDetails = [];
+            const productsMap = {};
+
+            for (const item of items) {
+                const product = await db.MerchantProducts.findOne({
+                    where: {
+                        id: item.productId,
+                        merchantId: merchant.id,
+                        isActive: true
+                    }
+                });
+
+                if (!product) {
+                    throw new Error(`Produk tidak tersedia: ${item.productId}`);
+                }
+
+                productsMap[item.productId] = product;
+
+                let price = product.price;
+                let crossedPrice = product.crossedPrice;
+                let variantStock = product.stock;
+
+                if (item.variantOptionId) {
+                    const variantOption = await db.MerchantProductVariantOptions.findOne({
+                        where: {
+                            id: item.variantOptionId,
+                            merchantProductId: item.productId
+                        },
+                        include: [{
+                            model: db.MerchantProductVariantOptionValues,
+                            as: 'optionValues',
+                            attributes: ['id', 'value'],
+                            include: [{
+                                model: db.MerchantProductVariants,
+                                as: 'variant',
+                                attributes: ['id', 'name']
+                            }]
+                        }]
+                    });
+
+                    if (!variantOption) {
+                        throw new Error(`Varian tidak ditemukan untuk produk ${product.name}`);
+                    }
+
+                    price = variantOption.price ?? product.price;
+                    crossedPrice = variantOption.crossedPrice ?? product.crossedPrice;
+                    variantStock = variantOption.stock;
+
+                    if (variantStock < item.quantity) {
+                        const label = variantOption.optionValues.map(ov =>
+                            `${ov.variant?.name}: ${ov.value}`
+                        ).join(', ');
+                        throw new Error(`Stok tidak cukup untuk varian ${label} dari ${product.name}`);
+                    }
+                } else {
+                    if (product.stock < item.quantity) {
+                        throw new Error(`Stok tidak cukup untuk produk ${product.name}`);
+                    }
+                }
+
+                const effectivePrice = crossedPrice !== null && crossedPrice !== undefined ? crossedPrice : price;
+                const total = effectivePrice * item.quantity;
+                subtotal += total;
+
+                itemDetails.push({
+                    productId: item.productId,
+                    variantOptionId: item.variantOptionId || null,
+                    quantity: item.quantity,
+                    price,
+                    total,
+                    isPreOrder: product.isPreOrder
+                });
+            }
+
+            let discountAmount = 0;
+
+            if (voucherCode) {
+                console.log("cek voucher code");
+                console.log(db.MerchantDiscountProducts === undefined);
+                const discount = await db.MerchantDiscounts.findOne({
+                    where: {
+                        code: voucherCode,
+                        isActive: true,
+                        merchantId: merchant.id,
+                        startDate: { [Op.lte]: new Date() },
+                        endDate: { [Op.gte]: new Date() }
+                    },
+                    include: [
+                        {
+                            model: db.MerchantProducts,
+                            as: 'products',
+                            through: { attributes: [] },
+                            required: false
+                        },
+                        {
+                            model: db.PaymentMethods,
+                            as: 'paymentMethods',
+                            through: { attributes: [] }
+                        }
+                    ]
+                });
+
+                if (!discount) {
+                    throw new Error('Voucher tidak ditemukan atau tidak aktif');
+                }
+
+                if (!discount.isAllPayments) {
+                    const allowedPaymentMethodIds = discount.paymentMethods.map(pm => pm.id);
+                    if (!allowedPaymentMethodIds.includes(paymentMethodId)) {
+                        throw new Error('Voucher tidak berlaku untuk metode pembayaran yang dipilih');
+                    }
+                }
+
+                const appliesToAll = discount.isAllProducts;
+                const applicableProducts = discount.products.map(p => p.id);
+
+                for (const item of itemDetails) {
+                    const isApplicable = appliesToAll || applicableProducts.includes(item.productId);
+                    if (isApplicable) {
+                        const rawDiscountValue = discount.discountType === 'percentage'
+                            ? item.total * (discount.discountValue / 100)
+                            : discount.discountValue;
+
+                        const finalDiscount = Math.min(rawDiscountValue, discount.budgetPerTransaction || rawDiscountValue);
+                        discountAmount += finalDiscount;
+                    }
+                }
+
+                // merchantDiscountId = discount.id;
+            }
+
+            const address = await db.CustomerAddresses.findOne({
+                where: { userId, isPrimary: true }
+            });
+
+            if (!address) {
+                throw new Error('Alamat utama tidak ditemukan');
+            }
+
+            const shippingRate = await getShippingRateByLocation(merchant.id, address.city, address.province);
+            if (!shippingRate) {
+                throw new Error('Ongkos kirim tidak ditemukan');
+            }
+
+            const shippingTotal = shippingRate.baseCost;
+
+            const totalAmount = subtotal - discountAmount + shippingTotal;
+
+            return res.status(200).json({
+                preview: {
+                    subtotal,
+                    discountAmount,
+                    shippingTotal,
+                    totalAmount,
+                    shippingDetails: {
+                        [merchant.id]: {
+                            courierName: shippingRate.courierName,
+                            serviceType: shippingRate.serviceType,
+                            shippingCost: shippingRate.baseCost,
+                            etd: shippingRate.etd
+                        }
+                    },
+                    items: itemDetails
+                }
+            });
+        } catch (error) {
+            console.error(error);
+            return res.status(400).json({ error: error.message });
+        }
+    }
+
     static async createOrder(req, res) {
         const t = await db.sequelize.transaction();
         try {
@@ -13,6 +253,15 @@ class OrderController {
                 paymentMethodId,
                 transferProofUrl
             } = req.body;
+
+            const subdomain = req.params.subdomain;
+            const merchant = await db.Merchants.findOne({
+                where: { subdomain, isActive: true }
+            });
+
+            if (!merchant) {
+                throw new Error('Toko tidak ditemukan');
+            }
 
             if (!Array.isArray(items) || items.length === 0) {
                 throw new Error('Item order tidak boleh kosong');
@@ -92,7 +341,13 @@ class OrderController {
             //     });
             // }
             for (const item of items) {
-                const product = await db.MerchantProducts.findByPk(item.productId);
+                const product = await db.MerchantProducts.findOne({
+                    where: {
+                        id: item.productId,
+                        merchantId: merchant.id,
+                        isActive: true
+                    }
+                });
 
                 if (!product || !product.isActive) {
                     throw new Error(`Produk tidak tersedia: ${product?.name || item.productId}`);
@@ -108,7 +363,7 @@ class OrderController {
                     const variantOption = await db.MerchantProductVariantOptions.findOne({
                         where: {
                             id: item.variantOptionId,
-                            productId: item.productId
+                            merchantProductId: item.productId
                         },
                         include: [
                             {
@@ -241,6 +496,7 @@ class OrderController {
             if (voucherCode) {
                 const discount = await db.MerchantDiscounts.findOne({
                     where: {
+                        merchantId: merchant.id,
                         code: voucherCode,
                         isActive: true,
                         startDate: { [Op.lte]: new Date() },
@@ -310,6 +566,50 @@ class OrderController {
             const itemsWithOrderId = itemDetails.map(i => ({ ...i, orderId: order.id }));
             await db.OrderItems.bulkCreate(itemsWithOrderId, { transaction: t });
 
+            for (const item of itemDetails) {
+                if (item.variantOptionId) {
+                    const variantOption = await db.MerchantProductVariantOptions.findOne({
+                        where: { id: item.variantOptionId },
+                        transaction: t,
+                        lock: t.LOCK.UPDATE
+                    });
+
+                    if (!variantOption) {
+                        throw new Error(`Varian dengan ID ${item.variantOptionId} tidak ditemukan`);
+                    }
+
+                    if (variantOption.stock < item.quantity) {
+                        throw new Error(`Stok tidak cukup untuk varian ${variantOption.id}`);
+                    }
+
+                    await variantOption.update(
+                        { stock: variantOption.stock - item.quantity },
+                        { transaction: t }
+                    );
+                } else {
+
+                    const product = await db.MerchantProducts.findOne({
+                        where: { id: item.productId },
+                        transaction: t,
+                        lock: t.LOCK.UPDATE
+                    });
+
+                    if (!product) {
+                        throw new Error(`Produk dengan ID ${item.productId} tidak ditemukan`);
+                    }
+
+                    if (product.stock < item.quantity) {
+                        throw new Error(`Stok tidak cukup untuk produk ${product.name}`);
+                    }
+
+                    await product.update(
+                        { stock: product.stock - item.quantity },
+                        { transaction: t }
+                    );
+                }
+            }
+
+
             for (const [merchantId, fee] of Object.entries(shippingFees)) {
                 await db.OrderShippingMethods.create({
                     orderId: order.id,
@@ -368,6 +668,8 @@ class OrderController {
             await t.commit();
             return res.status(201).json({ message: 'Order created successfully', order });
         } catch (error) {
+            console.error(error);
+
             await t.rollback();
             return res.status(400).json({ error: error.message });
         }

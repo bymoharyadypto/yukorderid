@@ -7,7 +7,6 @@ class MerchantController {
         try {
             const userId = req.user?.id;
             const merchantIds = req.user?.merchantIds;
-            console.log(req.user);
 
             // if (!userId || !merchantIds) {
             //     return res.status(401).json({ message: "User tidak terdaftar sebagai merchant" });
@@ -111,7 +110,7 @@ class MerchantController {
             const { merchantId } = req.params;
 
             const merchant = await db.Merchants.findOne({
-                where: { id: merchantId, userId },
+                where: { id: merchantId, userId, isActive: true },
                 attributes: ['id', 'storeName', 'storeUrl', 'isActive'],
                 include: [
                     {

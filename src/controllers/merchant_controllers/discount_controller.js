@@ -4,16 +4,14 @@ class MerchantDiscountController {
     static async getPaymentMethods(req, res) {
         try {
             const { merchantId } = req.params;
-            const merchantIds = req.user?.merchantIds;
+            const { id: userId } = req.user;
 
-            if (!merchantId || isNaN(Number(merchantId))) {
-                return res.status(400).json({ message: 'Parameter merchantId tidak valid' });
-            }
+            const merchant = await db.Merchants.findOne({
+                where: { id: merchantId, userId, isActive: true },
+            });
 
-            const parsedMerchantId = Number(merchantId);
-
-            if (!Array.isArray(merchantIds) || !merchantIds.includes(parsedMerchantId)) {
-                return res.status(403).json({ message: 'Akses ke merchant tidak diizinkan atau merchant tidak ditemukan' });
+            if (!merchant) {
+                return res.status(403).json({ message: 'Merchant tidak ditemukan atau tidak aktif' });
             }
 
             const paymentMethods = await db.PaymentMethods.findAll({
@@ -55,20 +53,23 @@ class MerchantDiscountController {
             } = req.body;
 
             const { merchantId } = req.params;
+            const { id: userId } = req.user;
             const merchantIds = req.user?.merchantIds;
 
-            if (!merchantId || isNaN(Number(merchantId))) {
-                return res.status(400).json({ message: 'Parameter merchantId tidak valid' });
+            const merchant = await db.Merchants.findOne({
+                where: { id: merchantId, userId, isActive: true }
+            });
+
+            if (!merchant) {
+                return res.status(403).json({ message: 'Merchant tidak ditemukan atau tidak aktif' });
             }
 
-            const parsedMerchantId = Number(merchantId);
-
-            if (!Array.isArray(merchantIds) || !merchantIds.includes(parsedMerchantId)) {
-                return res.status(403).json({ message: 'Akses ke merchant tidak diizinkan atau merchant tidak ditemukan' });
+            if (!Array.isArray(merchantIds) || !merchantIds.includes(merchant.id)) {
+                return res.status(403).json({ message: 'Akses ke merchant tidak diizinkan' });
             }
 
             const discount = await db.MerchantDiscounts.create({
-                merchantId: parsedMerchantId,
+                merchantId: merchant.id,
                 code,
                 description,
                 discountType,
@@ -87,7 +88,7 @@ class MerchantDiscountController {
             let finalProductIds = [];
             if (isAllProducts === true) {
                 const products = await db.MerchantProducts.findAll({
-                    where: { merchantId: parsedMerchantId, isActive: true },
+                    where: { merchantId: merchant.id, isActive: true },
                     attributes: ['id']
                 });
                 finalProductIds = products.map(p => p.id);
@@ -124,36 +125,6 @@ class MerchantDiscountController {
 
             await transaction.commit();
             return res.status(201).json({ message: 'Diskon berhasil dibuat' });
-
-            // const discount = await db.MerchantDiscounts.create({
-            //     merchantId: parsedMerchantId,
-            //     code,
-            //     description,
-            //     discountType,
-            //     discountValue,
-            //     maxBudget,
-            //     quota,
-            //     startDate,
-            //     endDate
-            // }, { transaction });
-
-            // if (isAllProducts === false && productIds?.length) {
-            //     const productDiscounts = productIds.map(productId => ({
-            //         discountId: discount.id,
-            //         productId
-            //     }));
-            //     await db.MerchantDiscountProducts.bulkCreate(productDiscounts, { transaction });
-            // }
-
-            // if (isAllPayments === false && paymentMethodIds?.length) {
-            //     const methodDiscounts = paymentMethodIds.map(paymentMethodId => ({
-            //         discountId: discount.id,
-            //         paymentMethodId
-            //     }));
-            //     await db.MerchantDiscountPaymentMethods.bulkCreate(methodDiscounts, { transaction });
-            // }
-            // await transaction.commit();
-            // return res.status(201).json({ message: 'Diskon berhasil dibuat', data: discount });
         } catch (error) {
             await transaction.rollback();
             console.error(error);
@@ -231,13 +202,20 @@ class MerchantDiscountController {
             const { isActive } = req.body;
             const merchantIds = req.user?.merchantIds;
 
+            const merchant = await db.Merchants.findOne({
+                where: { id: merchantId, userId, isActive: true },
+            });
+
+            if (!merchant) {
+                return res.status(403).json({ message: 'Merchant tidak ditemukan atau tidak aktif' });
+            }
+
+
             if (!merchantId || isNaN(Number(merchantId)) || !merchantDiscountId || isNaN(Number(merchantDiscountId))) {
                 return res.status(400).json({ message: 'Parameter merchantId atau discountId tidak valid' });
             }
 
-            const parsedMerchantId = Number(merchantId);
-
-            if (!Array.isArray(merchantIds) || !merchantIds.includes(parsedMerchantId)) {
+            if (!Array.isArray(merchantIds) || !merchantIds.includes(merchant.id)) {
                 return res.status(403).json({ message: 'Akses ke merchant tidak diizinkan atau merchant tidak ditemukan' });
             }
 
@@ -246,7 +224,7 @@ class MerchantDiscountController {
                 {
                     where: {
                         id: merchantDiscountId,
-                        merchantId: parsedMerchantId,
+                        merchantId: merchant.id,
                     },
                     transaction
                 }

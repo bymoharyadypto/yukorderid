@@ -8,6 +8,7 @@ class MerchantBankAccountsController {
             const { bankId, accountNumber, accountHolder, isPrimary = false } = req.body;
 
             const merchant = await db.Merchants.findOne({ where: { id: merchantId, userId, isActive: true } });
+
             if (!merchant) {
                 return res.status(403).json({ success: false, message: 'Merchant tidak ditemukan atau tidak aktif' });
             }

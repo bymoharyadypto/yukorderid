@@ -12,7 +12,7 @@ class PublicController {
         try {
             const categories = await db.Categories.findAll({
                 attributes: ['id', 'name'],
-                order: [['name', 'ASC']] // optional: urutkan berdasarkan nama
+                order: [['name', 'ASC']]
             });
 
             return res.status(200).json({ categories });
