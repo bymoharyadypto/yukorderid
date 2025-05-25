@@ -3,8 +3,7 @@ const db = require('../../models');
 class PaymentMethodController {
     static async getAllPaymentMethods(req, res) {
         try {
-            console.log('masuk getAllPaymentMethods');
-
+            // console.log('masuk getAllPaymentMethods');
             const paymentMethods = await db.PaymentMethods.findAll({
                 attributes: ['id', 'name', 'type', 'provider'],
                 where: { isActive: true },

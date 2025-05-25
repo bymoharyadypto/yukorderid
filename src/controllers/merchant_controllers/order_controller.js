@@ -11,7 +11,7 @@ class OrderController {
             }
 
             const merchant = await db.Merchants.findOne({
-                where: { id: merchantId, userId }
+                where: { id: merchantId, userId, isActive: true }
             });
 
             if (!merchant) {
@@ -134,12 +134,8 @@ class OrderController {
             const { id: userId } = req.user;
             const { orderId } = req.params;
 
-            if (!merchantId) {
-                return res.status(400).json({ error: 'Merchant user ID tidak boleh kosong' });
-            }
-
             const merchant = await db.Merchants.findOne({
-                where: { id: merchantId, userId }
+                where: { id: merchantId, userId, isActive: true }
             });
 
             if (!merchant) {
@@ -263,9 +259,17 @@ class OrderController {
     static async processCustomerOrderForMerchant(req, res) {
         const t = await db.sequelize.transaction();
         try {
-            const merchantId = req.user.merchantIds;
-            const staffId = req.user.id;
-            const { orderId } = req.params;
+            // const merchantId = req.user.merchantIds;
+            const { id: userId } = req.user;
+            const { merchantId, orderId } = req.params;
+
+            const merchant = await db.Merchants.findOne({
+                where: { id: merchantId, userId, isActive: true }
+            });
+
+            if (!merchant) {
+                return res.status(403).json({ error: 'Merchant tidak ditemukan' });
+            }
 
             const order = await db.Orders.findOne({
                 where: { id: orderId },
@@ -277,7 +281,7 @@ class OrderController {
                             {
                                 model: db.MerchantProducts,
                                 as: 'product',
-                                where: { merchantId }
+                                where: { merchantId: merchant.id }
                             }
                         ]
                     },
@@ -292,8 +296,8 @@ class OrderController {
             });
 
             if (!order) throw new Error('Order tidak ditemukan untuk merchant ini');
-            const payment = order.payments;
-
+            // const payment = order.payments;
+            const payment = order.payments?.[0];
             // if (!payment || payment.status !== 'Pending') {
             //     throw new Error('Pembayaran tidak dalam status Pending, tidak bisa diproses');
             // }
@@ -307,7 +311,7 @@ class OrderController {
                 const quantity = item.quantity;
 
                 const productRow = await db.MerchantProducts.findOne({
-                    where: { id: product.id },
+                    where: { id: product.id, merchantId: merchant.id },
                     transaction: t,
                     // lock: t.LOCK.UPDATE
                 });
@@ -350,7 +354,7 @@ class OrderController {
             if (verification && verification.status === 'Pending') {
                 verification.status = 'Accepted';
                 verification.verifiedAt = new Date();
-                verification.verifiedBy = staffId;
+                verification.verifiedBy = userId;
                 verification.notes = 'Diverifikasi otomatis saat merchant memproses order';
                 await verification.save({ transaction: t });
             }
@@ -378,18 +382,22 @@ class OrderController {
     static async inputOrderShipping(req, res) {
         const t = await db.sequelize.transaction();
         try {
-            const merchantId = req.user.merchantId;
-            const { orderId } = req.params;
+            // const merchantId = req.user.merchantId;
+            const { orderId, merchantId } = req.params;
             const { courierName, trackingNumber, shippedAt } = req.body;
-
+            const { id: userId } = req.user;
             // if (!courierName || !serviceType || !shippingCost || !etd || !trackingNumber) {
             //     throw new Error('Semua informasi pengiriman wajib diisi');
             // }
 
+            const merchant = await db.Merchants.findOne({
+                where: { id: merchantId, userId, isActive: true }
+            });
+
             const shipping = await db.OrderShippingMethods.findOne({
                 where: {
                     orderId,
-                    merchantId
+                    merchantId: merchant.id
                 },
                 transaction: t,
                 lock: t.LOCK.UPDATE
@@ -434,7 +442,7 @@ class OrderController {
                 include: [{
                     model: db.MerchantProducts,
                     as: 'product',
-                    where: { merchantId }
+                    where: { merchantId: merchant.id }
                 }],
                 transaction: t
             });
@@ -507,6 +515,8 @@ class OrderController {
             await t.commit();
             return res.status(200).json({ message: 'Pengiriman berhasil dicatat dan status order diperbarui' });
         } catch (error) {
+            console.error(error);
+
             await t.rollback();
             return res.status(400).json({ error: error.message });
         }

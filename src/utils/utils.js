@@ -20,16 +20,13 @@ async function getShippingRateByLocation(merchantId, city, province, courier = '
             merchantId,
             courierName: courier,
             serviceType: service,
+            status: 'active',
             [Op.or]: [
                 { city: city },
                 { province: province, city: null },
                 { province: null, city: null }
             ]
         },
-        // order: [
-        //     ['city', 'DESC NULLS LAST'],
-        //     ['province', 'DESC NULLS LAST']
-        // ]
         order: [
             [literal('city IS NULL'), 'ASC'],
             ['city', 'DESC'],

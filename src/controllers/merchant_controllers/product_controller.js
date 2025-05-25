@@ -4,6 +4,7 @@ class MerchantProductController {
     static async createMerchantProduct(req, res) {
         const transaction = await db.sequelize.transaction();
         const { merchantId } = req.params;
+        const { id: userId } = req.user;
         try {
             const {
                 name,
@@ -19,6 +20,14 @@ class MerchantProductController {
                 variants,
                 variantOptions
             } = req.body;
+
+            const merchant = await db.Merchants.findOne({
+                where: { id: merchantId, userId, isActive: true }
+            });
+
+            if (!merchant) {
+                return res.status(403).json({ error: 'Merchant tidak ditemukan untuk user ini' });
+            }
 
             if (!name || !description || !imageUrls?.length || !merchantId) {
                 return res.status(400).json({ message: 'Data produk tidak lengkap' });
@@ -44,7 +53,7 @@ class MerchantProductController {
             }
 
             const product = await db.MerchantProducts.create({
-                merchantId,
+                merchantId: merchant.id,
                 name,
                 description,
                 price: price ?? null,
@@ -154,10 +163,22 @@ class MerchantProductController {
 
             const { merchantId } = req.params;
             const { isActive } = req.query;
+            const { id: userId } = req.user
+
 
             if (!merchantId) {
                 return res.status(400).json({ message: 'Merchant ID tidak boleh kosong' });
             }
+
+
+            const merchant = await db.Merchants.findOne({
+                where: { id: merchantId, userId, isActive: true }
+            });
+
+            if (!merchant) {
+                return res.status(403).json({ error: 'Merchant tidak ditemukan untuk user ini' });
+            }
+
             const whereCondition = { merchantId };
             if (isActive) {
                 whereCondition.isActive = isActive;
@@ -224,9 +245,18 @@ class MerchantProductController {
     static async getMerchantProductById(req, res) {
         try {
             const { merchantId, merchantProductId } = req.params;
+            const { id: userId } = req.user;
 
             if (!merchantId || !merchantProductId) {
                 return res.status(400).json({ message: 'Merchant ID dan Product ID wajib diisi' });
+            }
+
+            const merchant = await db.Merchants.findOne({
+                where: { id: merchantId, userId, isActive: true }
+            });
+
+            if (!merchant) {
+                return res.status(403).json({ error: 'Merchant tidak ditemukan untuk user ini' });
             }
 
             const product = await db.MerchantProducts.findOne({
@@ -296,6 +326,15 @@ class MerchantProductController {
     static async updateMerchantProduct(req, res) {
         const transaction = await db.sequelize.transaction();
         const { merchantId, merchantProductId } = req.params;
+        const { id: userId } = req.user;
+
+        const merchant = await db.Merchants.findOne({
+            where: { id: merchantId, userId, isActive: true }
+        });
+
+        if (!merchant) {
+            return res.status(403).json({ error: 'Merchant tidak ditemukan untuk user ini' });
+        }
 
         try {
             const {
@@ -482,9 +521,18 @@ class MerchantProductController {
         try {
             const { merchantId, merchantProductId } = req.params;
             const { isActive } = req.body;
+            const { id: userId } = req.user;
 
             if (!merchantId || !merchantProductId) {
                 return res.status(400).json({ message: 'Merchant ID dan Product ID tidak boleh kosong' });
+            }
+
+            const merchant = await db.Merchants.findOne({
+                where: { id: merchantId, userId, isActive: true }
+            });
+
+            if (!merchant) {
+                return res.status(403).json({ error: 'Merchant tidak ditemukan untuk user ini' });
             }
 
             const [updatedRows] = await db.MerchantProducts.update(

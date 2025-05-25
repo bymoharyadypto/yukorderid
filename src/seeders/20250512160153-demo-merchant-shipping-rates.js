@@ -12,6 +12,7 @@ module.exports = {
         city: null,
         baseCost: 10000,
         etd: '1-2 Hari',
+        status: 'active',
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -23,6 +24,7 @@ module.exports = {
         city: null,
         baseCost: 12000,
         etd: '2-3 Hari',
+        status: 'active',
         createdAt: new Date(),
         updatedAt: new Date()
       },
@@ -34,6 +36,7 @@ module.exports = {
         city: null,
         baseCost: 15000,
         etd: '3-4 Hari',
+        status: 'active',
         createdAt: new Date(),
         updatedAt: new Date()
       }

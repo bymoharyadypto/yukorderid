@@ -24,7 +24,8 @@ module.exports = (sequelize, DataTypes) => {
     province: DataTypes.STRING,
     city: DataTypes.STRING,
     baseCost: DataTypes.INTEGER,
-    etd: DataTypes.STRING
+    etd: DataTypes.STRING,
+    status: DataTypes.STRING // active, inactive
   }, {
     sequelize,
     modelName: 'MerchantShippingRates',
