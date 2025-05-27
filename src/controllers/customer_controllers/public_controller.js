@@ -48,7 +48,7 @@ class PublicController {
 
             const products = await db.MerchantProducts.findAll({
                 where: whereCondition,
-                attributes: ['id', 'name', 'description', "weight", "size", "packaging", 'price', 'crossedPrice', 'stock', 'isPreOrder', 'preOrderDays', 'isActive'],
+                attributes: ['id', 'name', 'description', "weight", "dimensions", "packaging", 'price', 'crossedPrice', 'stock', 'isPreOrder', 'preOrderDays', 'isActive'],
                 include: [
                     {
                         model: db.MerchantDiscounts,
