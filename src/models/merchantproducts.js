@@ -59,7 +59,11 @@ module.exports = (sequelize, DataTypes) => {
     },
     isPreOrder: DataTypes.BOOLEAN,
     preOrderDays: DataTypes.INTEGER,
-    isActive: DataTypes.BOOLEAN
+    isActive: DataTypes.BOOLEAN,
+    productDetails: {
+      type: DataTypes.JSON,
+      allowNull: true,
+    }
   }, {
     sequelize,
     modelName: 'MerchantProducts',

@@ -18,7 +18,10 @@ class MerchantProductController {
                 imageUrls,
                 categories,
                 variants,
-                variantOptions
+                variantOptions,
+                weight,
+                size,
+                packaging,
             } = req.body;
 
             const merchant = await db.Merchants.findOne({
@@ -35,6 +38,10 @@ class MerchantProductController {
 
             if (imageUrls.length > 5) {
                 return res.status(400).json({ message: 'Maksimal 5 gambar yang diperbolehkan' });
+            }
+
+            if (productDetails && typeof productDetails !== 'object') {
+                return res.status(400).json({ message: 'Format productDetails harus berupa objek JSON' });
             }
 
             const hasVariants = Array.isArray(variants) && variants.length > 0;
@@ -61,7 +68,10 @@ class MerchantProductController {
                 stock,
                 isPreOrder,
                 preOrderDays,
-                isActive
+                isActive,
+                weight,
+                size,
+                packaging,
             }, { transaction });
 
             const imageData = imageUrls.map(url => ({
@@ -186,7 +196,7 @@ class MerchantProductController {
 
             const products = await db.MerchantProducts.findAll({
                 where: whereCondition,
-                attributes: ['id', 'name', 'description', 'price', 'crossedPrice', 'stock', 'isPreOrder', 'preOrderDays', 'isActive'],
+                attributes: ['id', 'name', 'description', "weight", "size", "packaging", 'price', 'crossedPrice', 'stock', 'isPreOrder', 'preOrderDays', 'isActive'],
                 include: [
                     {
                         model: db.MerchantProductImages,
@@ -264,7 +274,7 @@ class MerchantProductController {
                     id: merchantProductId,
                     merchantId
                 },
-                attributes: ['id', 'name', 'description', 'price', 'crossedPrice', 'stock', 'isPreOrder', 'preOrderDays', 'isActive'],
+                attributes: ['id', 'name', 'description', "weight", "size", "packaging", 'price', 'crossedPrice', 'stock', 'isPreOrder', 'preOrderDays', 'isActive'],
                 include: [
                     {
                         model: db.MerchantProductImages,
@@ -349,7 +359,10 @@ class MerchantProductController {
                 imageUrls,
                 categories,
                 variants,
-                variantOptions
+                variantOptions,
+                weight,
+                size,
+                packaging
             } = req.body;
 
             if (!name || !description || !imageUrls?.length || !merchantId || !merchantProductId) {
@@ -388,7 +401,10 @@ class MerchantProductController {
                 stock,
                 isPreOrder,
                 preOrderDays,
-                isActive
+                isActive,
+                weight,
+                size,
+                packaging
             }, { transaction });
 
             if (imageUrls) {
