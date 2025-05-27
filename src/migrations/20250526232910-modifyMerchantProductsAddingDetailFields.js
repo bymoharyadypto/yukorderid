@@ -7,7 +7,7 @@ module.exports = {
       type: Sequelize.STRING,
       allowNull: true
     });
-    await queryInterface.addColumn('MerchantProducts', 'size', {
+    await queryInterface.addColumn('MerchantProducts', 'dimensions', {
       type: Sequelize.STRING,
       allowNull: true
     });
@@ -19,7 +19,7 @@ module.exports = {
 
   async down(queryInterface, Sequelize) {
     await queryInterface.removeColumn('MerchantProducts', 'weight');
-    await queryInterface.removeColumn('MerchantProducts', 'size');
+    await queryInterface.removeColumn('MerchantProducts', 'packaging');
     await queryInterface.removeColumn('MerchantProducts', 'dimensions');
   }
 };

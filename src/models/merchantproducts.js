@@ -60,10 +60,9 @@ module.exports = (sequelize, DataTypes) => {
     isPreOrder: DataTypes.BOOLEAN,
     preOrderDays: DataTypes.INTEGER,
     isActive: DataTypes.BOOLEAN,
-    productDetails: {
-      type: DataTypes.JSON,
-      allowNull: true,
-    }
+    weight: DataTypes.STRING,
+    dimensions: DataTypes.STRING,
+    packaging: DataTypes.STRING
   }, {
     sequelize,
     modelName: 'MerchantProducts',
