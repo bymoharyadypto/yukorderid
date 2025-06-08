@@ -34,6 +34,126 @@ class MerchantDiscountController {
             return res.status(500).json({ message: 'Gagal mengambil daftar metode pembayaran' });
         }
     }
+    // static async createDiscount(req, res) {
+    //     const transaction = await db.sequelize.transaction();
+    //     try {
+    //         const {
+    //             code,
+    //             description,
+    //             discountType,
+    //             discountValue,
+    //             budgetPerTransaction,
+    //             quota,
+    //             productIds,
+    //             paymentMethodIds,
+    //             startDate,
+    //             endDate,
+    //             isAllProducts,
+    //             isAllPayments
+    //         } = req.body;
+
+    //         const { merchantId } = req.params;
+    //         const { id: userId } = req.user;
+    //         const merchantIds = req.user?.merchantIds;
+
+    //         const merchant = await db.Merchants.findOne({
+    //             where: { id: merchantId, userId, isActive: true }
+    //         });
+
+    //         if (!merchant) {
+    //             return res.status(403).json({ message: 'Merchant tidak ditemukan atau tidak aktif' });
+    //         }
+
+    //         if (!Array.isArray(merchantIds) || !merchantIds.includes(merchant.id)) {
+    //             return res.status(403).json({ message: 'Akses ke merchant tidak diizinkan' });
+    //         }
+
+    //         const existingDiscount = await db.MerchantDiscounts.findOne({
+    //             where: {
+    //                 merchantId: merchant.id,
+    //                 code: db.Sequelize.where(
+    //                     db.Sequelize.fn('LOWER', db.Sequelize.col('code')),
+    //                     code.toLowerCase()
+    //                 )
+    //             }
+    //         });
+
+    //         if (existingDiscount) {
+    //             return res.status(400).json({ message: 'Kode diskon sudah digunakan oleh merchant ini.' });
+    //         }
+
+    //         const discount = await db.MerchantDiscounts.create({
+    //             merchantId: merchant.id,
+    //             code,
+    //             description,
+    //             discountType,
+    //             discountValue,
+    //             budgetPerTransaction,
+    //             quota,
+    //             startDate,
+    //             endDate,
+    //             isAllProducts,
+    //             isAllPayments,
+    //             isActive: false
+    //         },
+    //             { transaction, logging: console.log }
+    //         );
+
+    //         let finalProductIds = [];
+    //         if (isAllProducts === true) {
+    //             const products = await db.MerchantProducts.findAll({
+    //                 where: { merchantId: merchant.id, isActive: true },
+    //                 attributes: ['id']
+    //             });
+    //             finalProductIds = products.map(p => p.id);
+    //         } else if (Array.isArray(productIds) && productIds.length) {
+    //             finalProductIds = productIds;
+    //         }
+
+    //         if (finalProductIds.length) {
+    //             const productDiscounts = finalProductIds.map(productId => ({
+    //                 merchantDiscountId: discount.id,
+    //                 merchantProductId: productId
+    //             }));
+    //             await db.MerchantDiscountProducts.bulkCreate(productDiscounts, { transaction });
+    //         }
+
+    //         let finalPaymentMethodIds = [];
+    //         if (isAllPayments === true) {
+    //             const methods = await db.PaymentMethods.findAll({
+    //                 where: { isActive: true },
+    //                 attributes: ['id']
+    //             });
+    //             finalPaymentMethodIds = methods.map(m => m.id);
+    //         } else if (Array.isArray(paymentMethodIds) && paymentMethodIds.length) {
+    //             finalPaymentMethodIds = paymentMethodIds;
+    //         }
+
+    //         if (finalPaymentMethodIds.length) {
+    //             const methodDiscounts = finalPaymentMethodIds.map(paymentMethodId => ({
+    //                 merchantDiscountId: discount.id,
+    //                 paymentMethodId
+    //             }));
+    //             await db.MerchantDiscountPaymentMethods.bulkCreate(methodDiscounts, { transaction });
+    //         }
+
+    //         await transaction.commit();
+    //         return res.status(201).json({ message: 'Diskon berhasil dibuat' });
+    //     } catch (error) {
+    //         await transaction.rollback();
+    //         if (error.name === 'SequelizeUniqueConstraintError') {
+    //             const isCodeConstraint = error.errors?.some(e =>
+    //                 e.path === 'code' || e.message.includes('unique_discount_code_per_merchant')
+    //             );
+    //             if (isCodeConstraint) {
+    //                 return res.status(400).json({ message: 'Kode diskon sudah digunakan oleh merchant ini.' });
+    //             }
+    //             return res.status(400).json({ message: 'Data duplikat tidak diperbolehkan.', error: error.message });
+    //         }
+    //         return res.status(500).json({ message: 'Gagal membuat diskon', error: error.message });
+    //     }
+    // }
+
     static async createDiscount(req, res) {
         const transaction = await db.sequelize.transaction();
         try {
@@ -67,6 +187,26 @@ class MerchantDiscountController {
             if (!Array.isArray(merchantIds) || !merchantIds.includes(merchant.id)) {
                 return res.status(403).json({ message: 'Akses ke merchant tidak diizinkan' });
             }
+            console.log("Merchant found:", merchant.id);
+
+            const existingDiscount = await db.MerchantDiscounts.findOne({
+                attributes: ['id'],
+                where: {
+                    merchantId: merchant.id,
+                    code: db.Sequelize.where(
+                        db.Sequelize.fn('LOWER', db.Sequelize.col('code')),
+                        code.toLowerCase()
+                    )
+                },
+                include: [{ model: db.MerchantProducts, as: 'products', through: { attributes: [] }, }],
+                transaction
+            });
+            console.log("Checking for existing discount with code:", code);
+
+            if (existingDiscount) {
+                return res.status(400).json({ message: 'Kode diskon sudah digunakan oleh merchant ini.' });
+            }
+            console.log("Creating discount for merchant:", merchant.id);
 
             const discount = await db.MerchantDiscounts.create({
                 merchantId: merchant.id,
@@ -81,31 +221,26 @@ class MerchantDiscountController {
                 isAllProducts,
                 isAllPayments,
                 isActive: false
-            },
-                { transaction, logging: console.log }
-            );
+            }, { transaction });
+            console.log("Discount created:", discount.id);
 
-            let finalProductIds = [];
-            if (isAllProducts === true) {
-                const products = await db.MerchantProducts.findAll({
+            // === Refactor produk diskon dengan relasi many-to-many ===
+            if (!isAllProducts) {
+                if (Array.isArray(productIds) && productIds.length > 0) {
+                    await discount.setProducts(productIds, { transaction }); // relasi dari belongsToMany
+                }
+            } else {
+                const allProductIds = await db.MerchantProducts.findAll({
                     where: { merchantId: merchant.id, isActive: true },
                     attributes: ['id']
                 });
-                finalProductIds = products.map(p => p.id);
-            } else if (Array.isArray(productIds) && productIds.length) {
-                finalProductIds = productIds;
+                const ids = allProductIds.map(p => p.id);
+                await discount.setProducts(ids, { transaction });
             }
 
-            if (finalProductIds.length) {
-                const productDiscounts = finalProductIds.map(productId => ({
-                    merchantDiscountId: discount.id,
-                    merchantProductId: productId
-                }));
-                await db.MerchantDiscountProducts.bulkCreate(productDiscounts, { transaction });
-            }
-
+            // === Tetap gunakan bulkCreate untuk relasi pembayaran (jika belum pakai belongsToMany) ===
             let finalPaymentMethodIds = [];
-            if (isAllPayments === true) {
+            if (isAllPayments) {
                 const methods = await db.PaymentMethods.findAll({
                     where: { isActive: true },
                     attributes: ['id']
@@ -127,10 +262,19 @@ class MerchantDiscountController {
             return res.status(201).json({ message: 'Diskon berhasil dibuat' });
         } catch (error) {
             await transaction.rollback();
-            console.error(error);
+            if (error.name === 'SequelizeUniqueConstraintError') {
+                const isCodeConstraint = error.errors?.some(e =>
+                    e.path === 'code' || e.message.includes('unique_discount_code_per_merchant')
+                );
+                if (isCodeConstraint) {
+                    return res.status(400).json({ message: 'Kode diskon sudah digunakan oleh merchant ini.' });
+                }
+                return res.status(400).json({ message: 'Data duplikat tidak diperbolehkan.', error: error.message });
+            }
             return res.status(500).json({ message: 'Gagal membuat diskon', error: error.message });
         }
     }
+
 
     static async getDiscounts(req, res) {
         // console.log('getDiscounts called');

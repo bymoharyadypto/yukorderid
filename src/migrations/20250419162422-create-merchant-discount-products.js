@@ -12,18 +12,18 @@ module.exports = {
       merchantDiscountId: {
         type: Sequelize.INTEGER,
         onDelete: 'CASCADE',
-        // references: {
-        //   model: 'MerchantDiscounts',
-        //   key: 'id'
-        // },
+        references: {
+          model: 'MerchantDiscounts',
+          key: 'id'
+        },
       },
       merchantProductId: {
         type: Sequelize.INTEGER,
         onDelete: 'CASCADE',
-        // references: {
-        //   model: 'MerchantProducts',
-        //   key: 'id'
-        // },
+        references: {
+          model: 'MerchantProducts',
+          key: 'id'
+        },
       },
       createdAt: {
         allowNull: false,

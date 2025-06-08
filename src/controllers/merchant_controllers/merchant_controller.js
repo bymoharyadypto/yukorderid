@@ -59,6 +59,18 @@ class MerchantController {
 
                         }
 
+                    },
+                    {
+                        model: db.MerchantBankAccounts,
+                        as: 'bankAccounts',
+                        attributes: ['id', 'bankId', 'accountNumber', 'accountHolder', "isPrimary"],
+                        include: [
+                            {
+                                model: db.Banks,
+                                attributes: ['id', 'name', 'code']
+                            }
+                        ],
+                        where: { isPrimary: true },
                     }
                 ],
                 order: [['createdAt', 'DESC']]
@@ -90,7 +102,9 @@ class MerchantController {
                     storeUrl: m.storeUrl,
                     isActive: m.isActive,
                     merchantProfile: m.merchantProfile,
-                    subscription: m.subscription
+                    subscription: m.subscription,
+                    operatingHours: m.operatingHours,
+                    bankAccounts: m.bankAccounts
                 };
             });
             return res.status(200).json({
@@ -154,6 +168,18 @@ class MerchantController {
 
                         }
 
+                    },
+                    {
+                        model: db.MerchantBankAccounts,
+                        as: 'bankAccounts',
+                        attributes: ['id', 'bankId', 'accountNumber', 'accountHolder', "isPrimary"],
+                        include: [
+                            {
+                                model: db.Banks,
+                                attributes: ['id', 'name', 'code']
+                            }
+                        ],
+                        where: { isPrimary: true },
                     }
                 ]
             });

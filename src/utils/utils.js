@@ -34,6 +34,7 @@ async function getShippingRateByLocation(merchantId, city, province, courier = '
             ['province', 'DESC']
         ]
     });
+    console.log(rate);
 
     return rate;
 }

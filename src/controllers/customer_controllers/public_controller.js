@@ -148,7 +148,7 @@ class PublicController {
                                         attributes: ['id', 'name', 'description'],
                                         through: {
                                             model: db.MerchantPackageFeatures,
-                                            attributes: [] // remove if you want to include extra info
+                                            attributes: []
                                         }
                                     }
                                 ]
@@ -165,6 +165,18 @@ class PublicController {
                             as: 'slots',
                             attributes: ['id', 'openTime', 'closeTime']
                         }
+                    },
+                    {
+                        model: db.MerchantBankAccounts,
+                        as: 'bankAccounts',
+                        attributes: ['id', 'bankId', 'accountNumber', 'accountHolder', "isPrimary"],
+                        include: [
+                            {
+                                model: db.Banks,
+                                attributes: ['id', 'name', 'code']
+                            }
+                        ],
+                        where: { isPrimary: true },
                     }
                 ]
             });

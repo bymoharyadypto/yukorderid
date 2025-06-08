@@ -58,6 +58,7 @@ class OrderController {
             const userId = req.user.id;
             const { items, voucherCode, paymentMethodId } = req.body;
             const subdomain = req.params.subdomain;
+            const now = new Date();
 
             const merchant = await db.Merchants.findOne({
                 where: { subdomain, isActive: true }
@@ -76,6 +77,7 @@ class OrderController {
 
             for (const item of items) {
                 const product = await db.MerchantProducts.findOne({
+                    attributes: ["id", "name", "price", "stock", "isActive", "crossedPrice"],
                     where: {
                         id: item.productId,
                         merchantId: merchant.id,
@@ -86,6 +88,7 @@ class OrderController {
                 if (!product) {
                     throw new Error(`Produk tidak tersedia: ${item.productId}`);
                 }
+                // console.log(product);
 
                 productsMap[item.productId] = product;
 
@@ -95,6 +98,7 @@ class OrderController {
 
                 if (item.variantOptionId) {
                     const variantOption = await db.MerchantProductVariantOptions.findOne({
+                        attributes: ['id', 'price', 'crossedPrice', 'stock', 'isActive'],
                         where: {
                             id: item.variantOptionId,
                             merchantProductId: item.productId
@@ -131,7 +135,7 @@ class OrderController {
                     }
                 }
 
-                const effectivePrice = crossedPrice !== null && crossedPrice !== undefined ? crossedPrice : price;
+                const effectivePrice = crossedPrice !== null && crossedPrice !== undefined && crossedPrice ? crossedPrice : price;
                 const total = effectivePrice * item.quantity;
                 subtotal += total;
 
@@ -148,15 +152,21 @@ class OrderController {
             let discountAmount = 0;
 
             if (voucherCode) {
-                console.log("cek voucher code");
-                console.log(db.MerchantDiscountProducts === undefined);
                 const discount = await db.MerchantDiscounts.findOne({
+                    attributes: ["id", "code", "description", "discountType", "discountValue", "budgetPerTransaction", "quota", "startDate", "endDate", "isActive"],
                     where: {
                         code: voucherCode,
                         isActive: true,
                         merchantId: merchant.id,
-                        startDate: { [Op.lte]: new Date() },
-                        endDate: { [Op.gte]: new Date() }
+                        [Op.and]: [
+                            { startDate: { [Op.lte]: now } },
+                            {
+                                [Op.or]: [
+                                    { endDate: null },
+                                    { endDate: { [Op.gte]: now } }
+                                ]
+                            }
+                        ]
                     },
                     include: [
                         {
@@ -342,6 +352,7 @@ class OrderController {
             // }
             for (const item of items) {
                 const product = await db.MerchantProducts.findOne({
+                    attributes: ["id", "name", "price", "crossedPrice", "stock", "isPreOrder", "isActive"],
                     where: {
                         id: item.productId,
                         merchantId: merchant.id,
@@ -361,6 +372,7 @@ class OrderController {
 
                 if (item.variantOptionId) {
                     const variantOption = await db.MerchantProductVariantOptions.findOne({
+                        attributes: ['id', 'price', 'crossedPrice', 'stock'],
                         where: {
                             id: item.variantOptionId,
                             merchantProductId: item.productId
@@ -437,7 +449,7 @@ class OrderController {
                 const merchantId = product.merchantId;
 
                 if (!shippingFees[merchantId]) {
-                    const rate = await getShippingRateByLocation(merchantId, address.city, address.province);
+                    const rate = await getShippingRateByLocation(merchant.id, address.city, address.province);
 
                     if (!rate) {
                         throw new Error(`Ongkos kirim tidak ditemukan untuk merchant ID ${merchantId}`);
@@ -495,6 +507,7 @@ class OrderController {
             // }
             if (voucherCode) {
                 const discount = await db.MerchantDiscounts.findOne({
+                    attributes: ["id", "code", "description", "discountType", "discountValue", "budgetPerTransaction", "quota", "startDate", "endDate", "isActive"],
                     where: {
                         merchantId: merchant.id,
                         code: voucherCode,
@@ -569,6 +582,7 @@ class OrderController {
             for (const item of itemDetails) {
                 if (item.variantOptionId) {
                     const variantOption = await db.MerchantProductVariantOptions.findOne({
+                        attributes: ["id", "stock"],
                         where: { id: item.variantOptionId },
                         transaction: t,
                         lock: t.LOCK.UPDATE
@@ -589,6 +603,7 @@ class OrderController {
                 } else {
 
                     const product = await db.MerchantProducts.findOne({
+                        attributes: ["id", "stock"],
                         where: { id: item.productId },
                         transaction: t,
                         lock: t.LOCK.UPDATE
@@ -622,6 +637,7 @@ class OrderController {
             }
 
             const selectedPaymentMethod = await db.PaymentMethods.findOne({
+                attributes: ['id', 'name', 'type', 'provider'],
                 where: { id: paymentMethodId, isActive: true }
             });
 

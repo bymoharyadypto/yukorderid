@@ -20,8 +20,6 @@ module.exports = {
       },
       code: {
         type: Sequelize.STRING,
-        allowNull: false,
-        unique: true
       },
       description: {
         type: Sequelize.TEXT
