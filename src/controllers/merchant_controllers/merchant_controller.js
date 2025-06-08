@@ -8,9 +8,10 @@ class MerchantController {
             const userId = req.user?.id;
             const merchantIds = req.user?.merchantIds;
 
-            // if (!userId || !merchantIds) {
-            //     return res.status(401).json({ message: "User tidak terdaftar sebagai merchant" });
-            // }
+            if (!userId || !merchantIds) {
+                return res.status(401).json({ message: "User tidak terdaftar sebagai merchant" });
+            }
+            console.log(merchantIds, "merchantIds");
 
             const merchants = await db.Merchants.findAll({
                 where: { id: merchantIds, userId },
@@ -50,6 +51,7 @@ class MerchantController {
                         model: db.MerchantOperatingHours,
                         as: 'operatingHours',
                         attributes: ['id', 'day', 'isOpen', 'is24Hours'],
+                        required: false,
                         order: [['id', 'ASC']],
                         include:
                         {
@@ -71,6 +73,7 @@ class MerchantController {
                             }
                         ],
                         where: { isPrimary: true },
+                        required: false
                     }
                 ],
                 order: [['createdAt', 'DESC']]
@@ -160,6 +163,7 @@ class MerchantController {
                         as: 'operatingHours',
                         attributes: ['id', 'day', 'isOpen', 'is24Hours'],
                         order: [['id', 'ASC']],
+                        required: false,
                         include:
                         {
                             model: db.MerchantOperatingHourSlots,
@@ -173,6 +177,7 @@ class MerchantController {
                         model: db.MerchantBankAccounts,
                         as: 'bankAccounts',
                         attributes: ['id', 'bankId', 'accountNumber', 'accountHolder', "isPrimary"],
+                        required: false,
                         include: [
                             {
                                 model: db.Banks,

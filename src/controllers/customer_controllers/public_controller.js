@@ -160,6 +160,7 @@ class PublicController {
                         as: 'operatingHours',
                         attributes: ['id', 'day', 'isOpen', 'is24Hours'],
                         order: [['id', 'ASC']],
+                        required: false,
                         include: {
                             model: db.MerchantOperatingHourSlots,
                             as: 'slots',
@@ -170,6 +171,7 @@ class PublicController {
                         model: db.MerchantBankAccounts,
                         as: 'bankAccounts',
                         attributes: ['id', 'bankId', 'accountNumber', 'accountHolder', "isPrimary"],
+                        required: false,
                         include: [
                             {
                                 model: db.Banks,
