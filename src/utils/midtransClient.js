@@ -1,5 +1,5 @@
 const midtransClient = require("midtrans-client");
-require('../config/loadEnv');
+require("dotenv").config();
 
 const snap = new midtransClient.Snap({
     isProduction: false,
