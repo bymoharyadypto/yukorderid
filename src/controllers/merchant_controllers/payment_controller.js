@@ -1,6 +1,7 @@
 const db = require('../../models');
 const { createMerchantFromOrder } = require('../user_controllers/user_controller')
 const snap = require('../../utils/midtransClient');
+const crypto = require('crypto');
 class PaymentController {
     static async handleMidtransCallback(req, res) {
         try {
@@ -12,7 +13,13 @@ class PaymentController {
                 transaction_id,
                 fraud_status
             } = req.body;
+            // const expectedSignature = crypto.createHash('sha512')
+            //     .update(order_id + status.gross_amount + process.env.MIDTRANS_SERVER_KEY_DEV)
+            //     .digest('hex');
 
+            // if (expectedSignature !== req.body.signature_key) {
+            //     return res.status(403).json({ message: 'Invalid signature key' });
+            // }
             const [orderId] = order_id.split('-').slice(1, 2);
             // const [_, id] = order_id.split('-');
             // const orderId = parseInt(id, 10);
