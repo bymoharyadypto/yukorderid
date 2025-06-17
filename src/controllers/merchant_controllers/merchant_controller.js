@@ -11,10 +11,10 @@ class MerchantController {
             if (!userId || !merchantIds) {
                 return res.status(401).json({ message: "User tidak terdaftar sebagai merchant" });
             }
-            console.log(merchantIds, "merchantIds");
+            // console.log(merchantIds, "merchantIds");
 
             const merchants = await db.Merchants.findAll({
-                where: { id: merchantIds, userId },
+                where: { id: merchantIds, userId, isActive: true },
                 attributes: ['id', 'storeName', 'storeUrl', 'isActive'],
                 include: [
                     {

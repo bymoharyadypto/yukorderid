@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "terminate-db":"node scripts/terminate-connections.js && npx sequelize db:drop --env development",
+    "terminate-db": "node scripts/terminate-connections.js && npx sequelize db:drop --env development",
     "dev": "cross-env NODE_ENV=development nodemon bin/www.js",
     "start": "node ./bin/www.js"
   },
@@ -21,6 +21,7 @@
     "hbs": "^4.2.0",
     "is-disposable-email": "^0.0.1",
     "jsonwebtoken": "^9.0.2",
+    "midtrans-client": "^1.4.3",
     "morgan": "^1.10.0",
     "mysql2": "^3.14.0",
     "nodemon": "^3.1.9",

@@ -650,7 +650,8 @@ class OrderController {
                 paymentChannel: selectedPaymentMethod.name,
                 amount: totalAmount,
                 status: 'Paid',
-                paidAt: new Date()
+                paidAt: new Date(),
+                note: 'Transfer Manual'
             }, { transaction: t });
 
             if (transferProofUrl) {

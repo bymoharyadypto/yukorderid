@@ -1,5 +1,6 @@
 const db = require('../models');
 const { Op, literal } = require('sequelize');
+const dayjs = require('dayjs');
 
 function transformDataArray(sourceArray, mappings) {
     if (!Array.isArray(sourceArray)) return [];
@@ -39,6 +40,12 @@ async function getShippingRateByLocation(merchantId, city, province, courier = '
     return rate;
 }
 
+function generateUniqueCode(prefix) {
+    const now = dayjs().format('YYYYMMDD');
+    const random = Math.floor(1000 + Math.random() * 9000);
+    return `${prefix}-${now}${random}`;
+}
+
 module.exports = {
-    transformDataArray, getShippingRateByLocation
+    transformDataArray, getShippingRateByLocation, generateUniqueCode
 };

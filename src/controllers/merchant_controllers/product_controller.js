@@ -77,27 +77,55 @@ class MerchantProductController {
 
             await db.MerchantProductImages.bulkCreate(imageData, { transaction });
 
-            const categoryIds = [];
+            // const categoryIds = [];
+
+            // for (const cat of categories) {
+            //     if (typeof cat === 'number') {
+            //         categoryIds.push(cat);
+            //     } else if (typeof cat === 'string') {
+            //         const [category] = await db.Categories.findOrCreate({
+            //             where: { name: cat },
+            //             defaults: { name: cat },
+            //             transaction
+            //         });
+            //         categoryIds.push(category.id);
+            //     }
+            // }
+
+            // const uniqueCategoryIds = [...new Set(rawCategoryIds)];
+
+            // const categoryData = categoryIds.map(categoryId => ({
+            //     merchantProductId: product.id,
+            //     categoryId
+            // }));
+
+            // await db.MerchantProductCategories.bulkCreate(categoryData, { transaction });
+            const rawCategoryIds = [];
 
             for (const cat of categories) {
                 if (typeof cat === 'number') {
-                    categoryIds.push(cat);
+                    rawCategoryIds.push(cat);
                 } else if (typeof cat === 'string') {
                     const [category] = await db.Categories.findOrCreate({
-                        where: { name: cat },
-                        defaults: { name: cat },
+                        where: { name: cat.trim() },
+                        defaults: { name: cat.trim() },
                         transaction
                     });
-                    categoryIds.push(category.id);
+                    rawCategoryIds.push(category.id);
                 }
             }
 
-            const categoryData = categoryIds.map(categoryId => ({
+            const uniqueCategoryIds = [...new Set(rawCategoryIds)];
+
+            const categoryData = uniqueCategoryIds.map(categoryId => ({
                 merchantProductId: product.id,
                 categoryId
             }));
 
-            await db.MerchantProductCategories.bulkCreate(categoryData, { transaction });
+            await db.MerchantProductCategories.bulkCreate(categoryData, {
+                transaction,
+                ignoreDuplicates: true
+            });
 
             if (hasVariants) {
                 const variantMap = {};

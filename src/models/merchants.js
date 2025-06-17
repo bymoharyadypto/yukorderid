@@ -17,6 +17,11 @@ module.exports = (sequelize, DataTypes) => {
       Merchants.hasMany(models.MerchantOperatingHours, { as: 'operatingHours', foreignKey: 'merchantId' })
       Merchants.hasMany(models.MerchantBankAccounts, { as: 'bankAccounts', foreignKey: 'merchantId' })
       Merchants.hasMany(models.MerchantDiscounts, { as: 'discounts', foreignKey: 'merchantId' })
+      Merchants.hasMany(models.MerchantPaymentMethods, { as: 'paymentMethods', foreignKey: 'merchantId' });
+      Merchants.hasMany(models.MerchantQRIS, { as: 'qrisList', foreignKey: 'merchantId' });
+      Merchants.hasOne(models.MerchantBalances, { as: 'balance', foreignKey: 'merchantId' });
+      Merchants.hasMany(models.MerchantExpenseCategories, { foreignKey: 'merchantId' });
+      Merchants.hasMany(models.MerchantExpenses, { foreignKey: 'merchantId' });
     }
   }
   Merchants.init({

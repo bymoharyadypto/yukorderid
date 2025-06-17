@@ -3,13 +3,14 @@ const db = require("../models");
 const checkMerchantFeature = (featureName) => async (req, res, next) => {
     try {
         const merchantId = req.params.merchantId || req.body.merchantId;
+        const userId = req.user?.id;
 
         if (!merchantId) {
             return res.status(400).json({ message: "merchantId tidak ditemukan di request" });
         }
 
         const merchant = await db.Merchants.findOne({
-            where: { id: merchantId },
+            where: { id: merchantId, userId, isActive: true },
             include: [
                 {
                     model: db.MerchantSubscriptions,
@@ -37,7 +38,7 @@ const checkMerchantFeature = (featureName) => async (req, res, next) => {
         });
 
         if (!merchant || !merchant.subscription || !merchant.subscription.package) {
-            return res.status(403).json({ message: "Paket langganan tidak aktif atau tidak ditemukan" });
+            return res.status(403).json({ message: "Paket langganan tidak aktif atau Merchant tidak ditemukan" });
         }
 
         const features = merchant.subscription.package.features || [];

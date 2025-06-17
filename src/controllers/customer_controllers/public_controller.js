@@ -195,6 +195,68 @@ class PublicController {
         }
     }
 
+    static async getMerchantPaymentMethodList(req, res) {
+        try {
+            const subdomain = req.params.subdomain;
+
+            if (!subdomain) {
+                return res.status(400).json({ message: 'Subdomain tidak valid.' });
+            }
+
+            const merchant = await db.Merchants.findOne({
+                where: { subdomain, isActive: true }
+            });
+
+            if (!merchant) {
+                return res.status(404).json({ message: 'Toko tidak ditemukan.' });
+            }
+
+
+            const paymentMethods = await db.MerchantPaymentMethods.findAll({
+                where: {
+                    merchantId: merchant.id,
+                    deletedAt: null
+                },
+                order: [['createdAt', 'ASC']],
+                include: [
+                    {
+                        model: db.MerchantBankAccounts,
+                        as: 'bankAccount',
+                        include: [{ model: db.Banks }],
+                        required: false
+                    },
+                    {
+                        model: db.MerchantQRIS,
+                        as: 'qris',
+                        required: false
+                    }
+                ]
+            });
+
+            const cleanedData = paymentMethods.map(pm => {
+                const cleaned = {
+                    ...pm.toJSON(),
+                    bankAccount: pm.type === 'bank_transfer' ? pm.bankAccount : null,
+                    qris: pm.type === 'qris' ? pm.qris : null,
+                };
+                return cleaned;
+            });
+
+            return res.status(200).json({
+                success: true,
+                message: 'Metode pembayaran merchant berhasil diambil',
+                data: cleanedData
+            });
+        } catch (error) {
+            console.error('Gagal mengambil daftar metode pembayaran:', error);
+            return res.status(500).json({
+                success: false,
+                message: 'Gagal mengambil daftar metode pembayaran',
+                error: error.message
+            });
+        }
+    }
+
 }
 module.exports = PublicController;
 
