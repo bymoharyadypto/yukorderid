@@ -17,6 +17,11 @@ module.exports = (sequelize, DataTypes) => {
       MerchantBankAccounts.belongsTo(models.Banks, {
         foreignKey: 'bankId',
       });
+      MerchantBankAccounts.hasOne(models.MerchantPaymentMethods, {
+        foreignKey: 'referenceId',
+        as: 'paymentMethod',
+        constraints: false
+      });
     }
   }
   MerchantBankAccounts.init({

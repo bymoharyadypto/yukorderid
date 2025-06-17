@@ -14,6 +14,7 @@ module.exports = (sequelize, DataTypes) => {
       Users.hasMany(models.Merchants, { as: 'merchants', foreignKey: 'userId' })
       Users.hasOne(models.CustomerProfiles, { as: 'customerProfile', foreignKey: 'userId' });
       Users.hasMany(models.CustomerAddresses, { as: 'customerAddresses', foreignKey: 'userId' });
+      Users.hasOne(models.UserWallets, { as: 'wallet', foreignKey: 'userId' });
     }
   }
   Users.init(

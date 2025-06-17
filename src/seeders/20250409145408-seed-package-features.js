@@ -6,6 +6,7 @@ module.exports = {
     await queryInterface.bulkInsert('MerchantPackageFeatures', [
       // Free
       { packageId: 1, featureId: 1, defaultLimit: 4, createdAt: new Date(), updatedAt: new Date() },
+      // { packageId: 1, featureId: 2, defaultLimit: 2, createdAt: new Date(), updatedAt: new Date() },
       { packageId: 1, featureId: 3, defaultLimit: 1, createdAt: new Date(), updatedAt: new Date() },
       { packageId: 1, featureId: 4, defaultLimit: 1, createdAt: new Date(), updatedAt: new Date() },
       { packageId: 1, featureId: 9, defaultLimit: null, createdAt: new Date(), updatedAt: new Date() },
@@ -13,7 +14,7 @@ module.exports = {
 
       // Premium
       { packageId: 2, featureId: 1, defaultLimit: null, createdAt: new Date(), updatedAt: new Date() },
-      { packageId: 2, featureId: 2, defaultLimit: 6, createdAt: new Date(), updatedAt: new Date() },
+      { packageId: 2, featureId: 2, defaultLimit: null, createdAt: new Date(), updatedAt: new Date() },
       { packageId: 2, featureId: 3, defaultLimit: null, createdAt: new Date(), updatedAt: new Date() },
       { packageId: 2, featureId: 4, defaultLimit: 3, createdAt: new Date(), updatedAt: new Date() },
       { packageId: 2, featureId: 5, defaultLimit: null, createdAt: new Date(), updatedAt: new Date() },

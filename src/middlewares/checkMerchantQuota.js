@@ -4,13 +4,14 @@ const checkMerchantQuota = (featureName, countModel, countWhere = {}) => {
     return async (req, res, next) => {
         try {
             const merchantId = req.params.merchantId || req.body.merchantId;
+            const userId = req.user?.id;
 
             if (!merchantId) {
                 return res.status(400).json({ message: "merchantId tidak ditemukan di request" });
             }
 
             const merchant = await db.Merchants.findOne({
-                where: { id: merchantId },
+                where: { id: merchantId, userId, isActive: true },
                 include: [
                     {
                         model: db.MerchantSubscriptions,

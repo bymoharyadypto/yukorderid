@@ -44,6 +44,7 @@ module.exports = (sequelize, DataTypes) => {
   Orders.init({
     userId: DataTypes.INTEGER,
     // guestOrderInfoId: DataTypes.INTEGER,
+    transactionNumber: DataTypes.STRING,
     subtotalAmount: DataTypes.INTEGER,
     discountAmount: DataTypes.INTEGER,
     totalAmount: DataTypes.INTEGER,

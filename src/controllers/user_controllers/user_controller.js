@@ -7,7 +7,8 @@ const { normalizePhone, isValidMobilePhoneNumber, generateOtpCode } = require('.
 const { sendOtpWhatsapp } = require('../../utils/otpUtils');
 const { signAccessToken, signRefreshToken } = require('../../helpers/jwt');
 const { signAccessTokenWithMerchants, signRefreshTokenWithMerchants, signAccessTokenForCustomer, signRefreshTokenForCustomer } = require('../../helpers/tokenHelper');
-
+const snap = require('../../utils/midtransClient');
+const { generateUniqueCode } = require('../../utils/utils');
 class UserController {
     static async requestOtp(req, res) {
         const transaction = await db.sequelize.transaction();
@@ -164,7 +165,7 @@ class UserController {
         }
     }
 
-    static async registerUserMerchant(req, res) {
+    static async registerUserMerchantV1(req, res) {
         const transaction = await db.sequelize.transaction();
         try {
             const { name, email, storeName, address, district, city, province, packageId, paymentMethodId, transferProofUrl, notes } = req.body;
@@ -296,21 +297,186 @@ class UserController {
                 include: { model: db.Roles, as: 'role' }
             });
 
-            // console.log(updatedUser, "updatedUser");
+            const accessToken = await signAccessTokenWithMerchants(updatedUser, transaction);
+            const refreshToken = await signRefreshTokenWithMerchants(updatedUser, transaction);
 
-            // const accessToken = signAccessToken({
-            //     id: updatedUser.id,
-            //     phoneNumber: updatedUser.phoneNumber,
-            //     role: updatedUser.role,
-            //     merchantIds: [merchant.id]
+            await db.RefreshTokens.create({
+                userId: existingUser.id,
+                token: refreshToken,
+                expiresAt: dayjs().add(7, 'days').toDate()
+            }, { transaction });
+
+            await transaction.commit();
+            return res.status(201).send({
+                message: 'Registrasi merchant berhasil',
+                accessToken,
+                refreshToken
+            });
+        } catch (err) {
+            await transaction.rollback();
+            console.error(err);
+            return res.status(err.status || 500).send({ message: err.message || 'Gagal verifikasi OTP' });
+        }
+    }
+
+    static async registerUserMerchant(req, res) {
+        const transaction = await db.sequelize.transaction();
+        try {
+            const { name, email, storeName, address, district, city, province, packageId, paymentId, transferProofUrl, notes } = req.body;
+            // console.log(req.user, "req.user");
+
+            const existingUser = await db.Users.findOne({
+                where: {
+                    phoneNumber: req.user.phoneNumber
+                }
+            });
+
+            if (existingUser && existingUser.isVerified) {
+                throw { status: 400, message: "Email atau Nomor Telepon sudah terdaftar dan terverifikasi" };
+            }
+
+            const role = await db.Roles.findOne({ where: { name: 'merchant' } });
+            if (!role) throw { status: 404, message: 'Role merchant tidak ditemukan' };
+
+            await existingUser.update({
+                name,
+                email,
+                isVerified: true,
+                roleId: role.id,
+            }, { transaction });
+
+            const subdomain = storeName.replace(/\s+/g, '').toLowerCase().replace(/[^a-z0-9]/gi, '');
+
+            const storeUrl = `https://yukorder.id/${subdomain}`;
+            const existingMerchant = await db.Merchants.findOne({ where: { subdomain } });
+            if (existingMerchant) {
+                throw { status: 400, message: 'Subdomain sudah digunakan, pilih nama toko lain.' };
+            }
+
+            const merchant = await db.Merchants.create({
+                userId: existingUser.id,
+                storeName,
+                subdomain,
+                storeUrl,
+                isActive: true,
+            }, { transaction });
+
+            await db.MerchantBalances.create({
+                merchantId: merchant.id,
+                balance: 0,
+                pendingWithdraw: 0,
+                lastUpdated: new Date(),
+            }, { transaction });
+
+            await db.MerchantProfiles.create({
+                merchantId: merchant.id,
+                address,
+                district,
+                city,
+                province,
+            }, { transaction });
+
+            let selectedPackage = null;
+            if (packageId) {
+                selectedPackage = await db.MerchantPackages.findByPk(packageId, { transaction });
+            }
+            // const payment = await db.Payments.findOne({
+            //     where: {
+            //         id: paymentId,
+            //     },
             // });
 
-            // const refreshToken = signRefreshToken({
-            //     id: user.id,
-            //     phoneNumber: user.phoneNumber,
-            //     role: updatedUser.role,
-            //     merchantIds: [merchant.id]
+            // await db.PaymentVerifications.update({
+            //     transferProofUrl,
+            //     notes: notes ?? null,
+            //     verifiedAt: new Date(),
+            //     status: 'Accepted',
+            // }, {
+            //     where: {
+            //         paymentId: payment.id,
+            //     },
+            //     transaction
             // });
+            let finalOrderId = null;
+            let newPackageId = null;
+
+            const isFreePackage = !paymentId && !transferProofUrl && !notes;
+
+            if (isFreePackage) {
+                if (!selectedPackage) throw { status: 404, message: 'Paket tidak ditemukan' };
+                const freeOrder = await db.Orders.create({
+                    userId: existingUser.id,
+                    subTotalAmount: selectedPackage.price,
+                    discountAmount: 0,
+                    totalAmount: selectedPackage.price,
+                    status: 'Completed',
+                    userType: 'Merchant',
+                    orderType: 'Subscription',
+                    paymentStatus: 'Paid'
+                }, { transaction });
+
+                finalOrderId = freeOrder.id;
+                newPackageId = selectedPackage.id;
+            } else {
+                const payment = await db.Payments.findOne({
+                    where: { id: paymentId },
+                    include: [{ model: db.Orders, as: 'order' }],
+                    transaction
+                });
+                if (!payment) throw { status: 404, message: 'Pembayaran tidak ditemukan' };
+
+                const order = payment.order;
+
+                if (order.userId !== req.user.id) {
+                    throw { status: 403, message: 'Akses tidak diizinkan' };
+                }
+
+                const orderItem = await db.OrderItems.findOne({
+                    where: { orderId: order.id },
+                    transaction
+                });
+
+                if (!orderItem) {
+                    throw { status: 404, message: 'Item order tidak ditemukan' };
+                }
+
+                await db.PaymentVerifications.update({
+                    transferProofUrl,
+                    notes: notes ?? null,
+                    verifiedAt: new Date(),
+                    uploadedAt: new Date(),
+                    status: 'Accepted'
+                }, {
+                    where: { paymentId: payment.id },
+                    transaction
+                });
+                newPackageId = orderItem.productId;
+                finalOrderId = payment.orderId;
+            }
+
+            await db.MerchantSubscriptions.create({
+                merchantId: merchant.id,
+                orderId: finalOrderId,
+                packageId: newPackageId,
+                isActive: true,
+            }, { transaction });
+
+            const existingToken = await db.RefreshTokens.findOne({
+                where: {
+                    userId: existingUser.id,
+                    expiresAt: { [Op.gt]: new Date() }
+                },
+                order: [['createdAt', 'DESC']]
+            });
+
+            if (existingToken) {
+                await existingToken.destroy({ transaction });
+            }
+
+            const updatedUser = await db.Users.findByPk(existingUser.id, {
+                include: { model: db.Roles, as: 'role' }
+            });
+
             const accessToken = await signAccessTokenWithMerchants(updatedUser, transaction);
             const refreshToken = await signRefreshTokenWithMerchants(updatedUser, transaction);
 
@@ -504,7 +670,7 @@ class UserController {
                         model: db.CustomerAddresses,
                         as: 'customerAddresses',
                         where: { isPrimary: true },
-                        required: false, // agar tetap jalan meskipun belum punya alamat
+                        required: false,
                         attributes: ['label', 'recipientName', 'phoneNumber', 'province', 'city', 'district', 'postalCode', 'fullAddress', 'isPrimary']
                     }
                 ]
@@ -523,6 +689,365 @@ class UserController {
             return res.status(500).json({ message: "Gagal mengambil data profil user" });
         }
     }
+
+    static async initiateMerchantRegistration(req, res) {
+        const transaction = await db.sequelize.transaction();
+        try {
+            const { name, email, storeName, address, district, city, province, packageId } = req.body;
+            const existingUser = await db.Users.findOne({ where: { phoneNumber: req.user.phoneNumber } });
+            if (existingUser && existingUser.isVerified) {
+                throw { status: 400, message: "Nomor telepon sudah terverifikasi" };
+            }
+
+            const role = await db.Roles.findOne({ where: { name: 'merchant' } });
+            if (!role) throw { status: 404, message: 'Role merchant tidak ditemukan' };
+
+            await existingUser.update({ name, email, isVerified: true, roleId: role.id }, { transaction });
+
+            const selectedPackage = await db.MerchantPackages.findByPk(packageId);
+            if (!selectedPackage) throw { status: 404, message: 'Paket tidak ditemukan' };
+
+            const order = await db.Orders.create({
+                userId: existingUser.id,
+                totalAmount: selectedPackage.price,
+                status: 'Pending',
+                userType: 'Merchant',
+                orderType: 'Subscription',
+                paymentStatus: selectedPackage.price === 0 ? 'Paid' : 'Pending',
+            }, { transaction });
+
+            await db.OrderItems.create({
+                orderId: order.id,
+                merchantProductId: selectedPackage.id,
+                quantity: 1,
+                total: selectedPackage.price
+            }, { transaction });
+
+            if (selectedPackage.price === 0) {
+                await this.createMerchantFromOrder(order, existingUser, { storeName, address, district, city, province }, transaction);
+            } else {
+                const parameter = {
+                    transaction_details: {
+                        order_id: `ORDER-${order.id}-${Date.now()}`,
+                        gross_amount: selectedPackage.price
+                    },
+                    customer_details: {
+                        first_name: name,
+                        email: email,
+                        phone: existingUser.phoneNumber
+                    },
+                };
+
+                const snapResponse = await snap.createTransaction(parameter);
+
+                await transaction.commit();
+                return res.status(201).json({
+                    message: 'Silakan lanjutkan pembayaran',
+                    snapToken: snapResponse.token
+                });
+            }
+
+            const updatedUser = await db.Users.findByPk(existingUser.id, { include: { model: db.Roles, as: 'role' } });
+            const accessToken = await signAccessTokenWithMerchants(updatedUser, transaction);
+            const refreshToken = await signRefreshTokenWithMerchants(updatedUser, transaction);
+
+            await db.RefreshTokens.create({
+                userId: existingUser.id,
+                token: refreshToken,
+                expiresAt: dayjs().add(7, 'days').toDate()
+            }, { transaction });
+
+            await transaction.commit();
+            return res.status(201).send({
+                message: 'Registrasi merchant berhasil',
+                accessToken,
+                refreshToken
+            });
+        } catch (err) {
+            await transaction.rollback();
+            console.error(err);
+            return res.status(err.status || 500).send({ message: err.message || 'Gagal registrasi merchant' });
+        }
+    }
+
+    static async createMerchantFromOrder(order, user, data, transaction) {
+        const { storeName, address, district, city, province, packageId } = data;
+        const subdomain = storeName.replace(/\s+/g, '').toLowerCase().replace(/[^a-z0-9]/gi, '');
+        const storeUrl = `https://yukorder.id/${subdomain}`;
+
+        const existing = await db.Merchants.findOne({ where: { subdomain } });
+        if (existing) throw { status: 400, message: 'Subdomain sudah digunakan' };
+
+        const merchant = await db.Merchants.create({
+            userId: user.id,
+            storeName,
+            subdomain,
+            storeUrl,
+            isActive: true
+        }, { transaction });
+
+        await db.MerchantProfiles.create({
+            merchantId: merchant.id,
+            address,
+            district,
+            city,
+            province
+        }, { transaction });
+
+        await db.MerchantSubscriptions.create({
+            merchantId: merchant.id,
+            orderId: order.id,
+            packageId,
+            isActive: true
+        }, { transaction });
+    }
+
+    // static async createPaymentWithMidtrans(req, res) {
+    //     const transaction = await db.sequelize.transaction();
+    //     try {
+    //         const {
+    //             packageId,
+    //         } = req.body;
+
+    //         if (!packageId) {
+    //             throw { status: 400, message: 'packageId wajib diisi' };
+    //         }
+
+    //         const user = await db.Users.findOne({ where: { phoneNumber: req.user.phoneNumber } });
+
+    //         const selectedPackage = await db.MerchantPackages.findByPk(packageId);
+    //         if (!selectedPackage) throw { status: 404, message: 'Paket tidak ditemukan' };
+
+    //         const order = await db.Orders.create({
+    //             userId: user.id,
+    //             totalAmount: selectedPackage.price,
+    //             status: 'Pending',
+    //             userType: 'Merchant',
+    //             orderType: 'Subscription',
+    //             paymentStatus: 'Pending'
+    //         }, { transaction });
+
+    //         await db.OrderItems.create({
+    //             orderId: order.id,
+    //             merchantProductId: selectedPackage.id,
+    //             quantity: 1,
+    //             total: selectedPackage.price
+    //         }, { transaction });
+
+    //         const parameter = {
+    //             transaction_details: {
+    //                 order_id: `ORDER-${order.id}-${Date.now()}`,
+    //                 gross_amount: selectedPackage.price,
+    //             },
+    //             customer_details: {
+    //                 first_name: user.name,
+    //                 email: user.email || null,
+    //                 phone: user.phoneNumber,
+    //             },
+    //             enabled_payments: ['gopay', 'bank_transfer', 'credit_card', 'shopeepay'],
+    //             expiry: { unit: 'hour', duration: 1 }
+    //         };
+
+    //         const midtransResponse = await snap.createTransaction(parameter);
+
+    //         // console.log('midtransResponse', midtransResponse);
+
+    //         const paymentMethod = await db.PaymentMethods.findOne({ where: { type: midtransResponse.payment_type } });
+
+    //         const payment = await db.Payments.create({
+    //             orderId: order.id,
+    //             paymentMethodId: paymentMethod.id,
+    //             paymentChannel: midtransResponse.payment_type,
+    //             amount: selectedPackage.price,
+    //             status: 'Pending',
+    //             paymentReferenceId: midtransResponse.token,
+    //             invoiceNumber: midtransResponse.transaction_id || null,
+    //             paymentLink: midtransResponse.redirect_url,
+    //             expiredAt: dayjs().add(1, 'day').toDate()
+    //         }, { transaction });
+
+    //         await db.PaymentVerifications.create({
+    //             paymentId: payment.id,
+    //             status: 'Pending',
+    //         }, { transaction });
+
+    //         await transaction.commit();
+
+    //         return res.status(201).json({
+    //             message: 'Silakan lanjutkan pembayaran',
+    //             paymentLink: midtransResponse.redirect_url,
+    //             token: midtransResponse.token,
+    //         });
+
+    //     } catch (err) {
+    //         await transaction.rollback();
+    //         console.error(err);
+    //         return res.status(err.status || 500).json({ message: err.message || 'Gagal registrasi merchant' });
+    //     }
+    // }
+
+    static async previewCheckoutSubscription(req, res) {
+        try {
+            const { packageId } = req.body;
+            if (!packageId) {
+                return res.status(400).json({ message: 'packageId wajib diisi' });
+            }
+
+            const user = await db.Users.findOne({
+                where: { phoneNumber: req.user.phoneNumber },
+                attributes: ['id', 'name', 'email', 'phoneNumber']
+            });
+
+            const selectedPackage = await db.MerchantPackages.findByPk(packageId, {
+                attributes: ['id', 'name', 'price', 'durationInDays', 'description']
+            });
+
+            if (!selectedPackage) {
+                return res.status(404).json({ message: 'Paket tidak ditemukan' });
+            }
+
+            const userInfo = user ? {
+                name: user.name,
+                email: user.email,
+                phone: user.phoneNumber
+            } : {
+                name: null,
+                email: null,
+                phone: null
+            };
+
+            return res.status(200).json({
+                message: 'Preview data berhasil diambil',
+                data: {
+                    jenisMerchant: selectedPackage.name,
+                    hargaLangganan: selectedPackage.price,
+                    total: selectedPackage.price,
+                    user: userInfo
+
+                }
+            });
+
+        } catch (error) {
+            console.error('[Preview Checkout Error]', error);
+            return res.status(500).json({ message: 'Gagal mengambil data preview' });
+        }
+    }
+
+
+    static async createPaymentWithMidtrans(req, res) {
+        const transaction = await db.sequelize.transaction();
+        try {
+            const { packageId } = req.body;
+            if (!packageId) throw { status: 400, message: 'packageId wajib diisi' };
+
+            const user = await db.Users.findOne({ where: { phoneNumber: req.user.phoneNumber } });
+            const selectedPackage = await db.MerchantPackages.findByPk(packageId);
+            if (!selectedPackage) throw { status: 404, message: 'Paket tidak ditemukan' };
+
+            const existingOrder = await db.Orders.findOne({
+                where: {
+                    userId: user.id,
+                    orderType: 'Subscription',
+                    status: 'Pending',
+                    paymentStatus: 'Pending'
+                },
+                include: [{
+                    model: db.Payments,
+                    as: 'payments',
+                    where: {
+                        status: 'Pending',
+                        expiredAt: { [Op.gt]: new Date() }
+                    }
+                }]
+            });
+            // console.log('existingOrder', existingOrder.payments[0]);
+
+            if (existingOrder) {
+                const existingPayment = existingOrder.payments[0];
+                return res.status(200).json({
+                    message: 'Masih ada pembayaran yang belum diselesaikan',
+                    paymentId: existingPayment.id,
+                    paymentLink: existingPayment.paymentLink,
+                    token: existingPayment.paymentReferenceId
+                });
+            }
+
+            const transactionNumber = generateUniqueCode('TXN');
+            const invoiceNumber = generateUniqueCode('INV');
+
+            const order = await db.Orders.create({
+                userId: user.id,
+                transactionNumber: transactionNumber,
+                subtotalAmount: selectedPackage.price,
+                discountAmount: 0,
+                totalAmount: selectedPackage.price,
+                status: 'Pending',
+                userType: 'Merchant',
+                orderType: 'Subscription',
+                paymentStatus: 'Pending'
+            }, { transaction });
+
+            await db.OrderItems.create({
+                orderId: order.id,
+                productId: selectedPackage.id,
+                quantity: 1,
+                total: selectedPackage.price
+            }, { transaction });
+
+            const parameter = {
+                transaction_details: {
+                    order_id: `ORDER-${order.id}-${Date.now()}`,
+                    gross_amount: selectedPackage.price,
+                },
+                customer_details: {
+                    first_name: user.name,
+                    email: user.email || null,
+                    phone: user.phoneNumber,
+                },
+                enabled_payments: ['gopay', 'bank_transfer', 'credit_card', 'shopeepay'],
+                expiry: { unit: 'hour', duration: 1 }
+            };
+
+            const midtransResponse = await snap.createTransaction(parameter);
+            // const status = await snap.transaction.status(order.id);
+            // console.log('status', status);
+
+            const payment = await db.Payments.create({
+                orderId: order.id,
+                externalPaymentId: parameter.transaction_details.order_id,
+                invoiceNumber: invoiceNumber,
+                amount: selectedPackage.price,
+                status: 'Pending',
+                paymentReferenceId: midtransResponse.token,
+                paymentLink: midtransResponse.redirect_url,
+                expiredAt: dayjs().add(1, 'hour').toDate(),
+                note: 'Payment via Midtrans'
+            }, { transaction });
+
+            await db.PaymentVerifications.create({
+                paymentId: payment.id,
+                status: 'Pending'
+            }, { transaction });
+
+            await transaction.commit();
+
+            return res.status(201).json({
+                message: 'Silakan lanjutkan pembayaran',
+                paymentId: payment.id,
+                paymentLink: midtransResponse.redirect_url,
+                token: midtransResponse.token,
+            });
+
+        } catch (err) {
+            await transaction.rollback();
+            console.error(err);
+            return res.status(err.status || 500).json({ message: err.message || 'Gagal registrasi merchant' });
+        }
+    }
+
+
+
+
 }
 
 

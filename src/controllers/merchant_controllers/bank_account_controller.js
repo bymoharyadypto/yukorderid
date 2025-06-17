@@ -2,18 +2,19 @@ const db = require('../../models');
 
 class MerchantBankAccountsController {
     static async createMerchantBankAccount(req, res) {
+        const t = await db.sequelize.transaction();
         try {
             const userId = req.user?.id;
             const { merchantId } = req.params;
             const { bankId, accountNumber, accountHolder, isPrimary = false } = req.body;
 
-            const merchant = await db.Merchants.findOne({ where: { id: merchantId, userId, isActive: true } });
+            const merchant = await db.Merchants.findOne({ where: { id: merchantId, userId, isActive: true }, transaction: t });
 
             if (!merchant) {
                 return res.status(403).json({ success: false, message: 'Merchant tidak ditemukan atau tidak aktif' });
             }
 
-            const bank = await db.Banks.findOne({ where: { id: bankId, isActive: true } });
+            const bank = await db.Banks.findOne({ where: { id: bankId, isActive: true }, transaction: t });
             if (!bank) {
                 return res.status(400).json({ success: false, message: 'Bank tidak valid atau tidak aktif' });
             }
@@ -21,26 +22,51 @@ class MerchantBankAccountsController {
             if (isPrimary) {
                 await db.MerchantBankAccounts.update(
                     { isPrimary: false },
-                    { where: { merchantId } }
+                    { where: { merchantId }, transaction: t }
                 );
+
+                // await db.MerchantPaymentMethods.update(
+                //     { isPrimary: false },
+                //     {
+                //         where: {
+                //             merchantId,
+                //             type: 'bank_transfer'
+                //         },
+                //         transaction: t
+                //     }
+                // );
             }
 
             const newAccount = await db.MerchantBankAccounts.create({
-                merchantId,
+                merchantId: merchant.id,
                 bankId,
                 accountNumber,
                 accountHolder,
                 isPrimary: !!isPrimary,
                 verifiedAt: new Date(),
-            });
+            }, { transaction: t });
+
+            const newPaymentMethod = await db.MerchantPaymentMethods.create({
+                merchantId: merchant.id,
+                type: 'bank_transfer',
+                referenceId: newAccount.id,
+                isEnable: true,
+            }, { transaction: t });
+
+            await t.commit();
 
             return res.status(201).json({
                 success: true,
                 message: 'Akun bank merchant berhasil ditambahkan',
-                data: newAccount,
+                data: {
+                    bankAccount: newAccount,
+                    paymentMethod: newPaymentMethod
+                }
+
             });
         } catch (error) {
             console.error('Gagal membuat akun bank merchant:', error);
+            await t.rollback();
             return res.status(500).json({
                 success: false,
                 message: 'Gagal membuat akun bank merchant',
@@ -62,7 +88,7 @@ class MerchantBankAccountsController {
             }
 
             const accounts = await db.MerchantBankAccounts.findAll({
-                where: { merchantId },
+                where: { merchantId: merchant.id },
                 include: [{ model: db.Banks, attributes: ['id', 'name', 'code', 'logoUrl'] }],
                 order: [['isPrimary', 'DESC'], ['createdAt', 'DESC']],
             });
