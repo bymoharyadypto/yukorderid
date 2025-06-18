@@ -51,6 +51,38 @@ async function verifyToken(req, res, next) {
     }
 }
 
+async function verifyAdminToken(req, res, next) {
+    try {
+        const authHeader = req.headers.authorization;
+
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ message: 'Token tidak ditemukan atau format salah' });
+        }
+
+        const token = authHeader.split(' ')[1];
+
+        const decoded = verifyAccessToken(token);
+
+        const user = await db.Users.findByPk(decoded.id);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User tidak ditemukan' });
+        }
+        req.user = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            phoneNumber: user.phoneNumber,
+            role: decoded.role,
+            isVerified: user.isVerified,
+        };
+
+        next();
+    } catch (err) {
+        return res.status(401).json({ message: 'Token tidak valid atau sudah kadaluarsa' });
+    }
+}
+
 async function canRegisterMerchant(req, res, next) {
     try {
         const userId = req.user.id;
@@ -113,4 +145,4 @@ async function validateUserMerchant(req, res, next) {
 }
 
 
-module.exports = { authentication, verifyToken, canRegisterMerchant, validateUserMerchant };
+module.exports = { authentication, verifyToken, verifyAdminToken, canRegisterMerchant, validateUserMerchant };
