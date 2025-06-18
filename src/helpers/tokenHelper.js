@@ -56,10 +56,30 @@ async function signRefreshTokenForCustomer(user, options = {}) {
     });
 }
 
+async function signAccessTokenForAdmin(user, options = {}) {
+    return signAccessToken({
+        id: user.id,
+        name: user.name,
+        phoneNumber: user.phoneNumber,
+        role: user.role,
+    });
+}
+
+async function signRefreshTokenForAdmin(user, options = {}) {
+    return signRefreshToken({
+        id: user.id,
+        name: user.name,
+        phoneNumber: user.phoneNumber,
+        role: user.role,
+    });
+}
+
 module.exports = {
     getMerchantIdsByUser,
     signAccessTokenWithMerchants,
     signRefreshTokenWithMerchants,
     signAccessTokenForCustomer,
-    signRefreshTokenForCustomer
+    signRefreshTokenForCustomer,
+    signAccessTokenForAdmin,
+    signRefreshTokenForAdmin
 };

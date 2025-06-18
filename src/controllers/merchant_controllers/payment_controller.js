@@ -2,6 +2,8 @@ const db = require('../../models');
 const { createMerchantFromOrder } = require('../user_controllers/user_controller')
 const snap = require('../../utils/midtransClient');
 const crypto = require('crypto');
+require("dotenv").config();
+
 class PaymentController {
     static async handleMidtransCallback(req, res) {
         try {
@@ -11,18 +13,22 @@ class PaymentController {
                 transaction_status,
                 payment_type,
                 transaction_id,
-                fraud_status
+                fraud_status,
+                // signature_key
             } = req.body;
-            // const expectedSignature = crypto.createHash('sha512')
-            //     .update(order_id + status.gross_amount + process.env.MIDTRANS_SERVER_KEY_DEV)
-            //     .digest('hex');
+            const expectedSignature = crypto.createHash('sha512')
+                .update(order_id + status.gross_amount + process.env.MIDTRANS_SERVER_KEY_DEV)
+                .digest('hex');
 
-            // if (expectedSignature !== req.body.signature_key) {
-            //     return res.status(403).json({ message: 'Invalid signature key' });
-            // }
+            if (expectedSignature !== signature_key) {
+                return res.status(403).json({ message: 'Invalid signature key' });
+            }
             const [orderId] = order_id.split('-').slice(1, 2);
             // const [_, id] = order_id.split('-');
             // const orderId = parseInt(id, 10);
+
+            console.log('[MIDTRANS CALLBACK INCOMING]', req.body);
+
 
             const order = await db.Orders.findByPk(orderId);
             if (!order) return res.status(404).json({ message: 'Order tidak ditemukan' });
