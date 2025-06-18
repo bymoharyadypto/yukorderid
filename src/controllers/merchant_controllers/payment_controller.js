@@ -14,7 +14,7 @@ class PaymentController {
                 payment_type,
                 transaction_id,
                 fraud_status,
-                // signature_key
+                signature_key
             } = req.body;
             const expectedSignature = crypto.createHash('sha512')
                 .update(order_id + status.gross_amount + process.env.MIDTRANS_SERVER_KEY_DEV)
