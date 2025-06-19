@@ -10,19 +10,20 @@ class PaymentController {
             const transaction = await db.sequelize.transaction();
             const {
                 order_id,
+                // gross_amount,
                 transaction_status,
                 payment_type,
                 transaction_id,
                 fraud_status,
-                signature_key
+                // signatusre_key
             } = req.body;
-            const expectedSignature = crypto.createHash('sha512')
-                .update(order_id + status.gross_amount + process.env.MIDTRANS_SERVER_KEY_DEV)
-                .digest('hex');
+            // const expectedSignature = crypto.createHash('sha512')
+            //     .update(order_id + gross_amount + process.env.MIDTRANS_SERVER_KEY_DEVELOPMENT)
+            //     .digest('hex');
 
-            if (expectedSignature !== signature_key) {
-                return res.status(403).json({ message: 'Invalid signature key' });
-            }
+            // if (expectedSignature !== signature_key) {
+            //     return res.status(403).json({ message: 'Invalid signature key' });
+            // }
             const [orderId] = order_id.split('-').slice(1, 2);
             // const [_, id] = order_id.split('-');
             // const orderId = parseInt(id, 10);
