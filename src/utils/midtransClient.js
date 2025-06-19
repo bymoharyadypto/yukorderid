@@ -49,13 +49,11 @@
 const midtransClient = require("midtrans-client");
 const path = require("path");
 
-// Tetap load env sesuai NODE_ENV
 const nodeEnv = process.env.NODE_ENV || "development";
 require("dotenv").config({
     path: path.resolve(__dirname, `../.env.${nodeEnv}`),
 });
 
-// Helper untuk memastikan env ada
 function requiredEnv(key) {
     if (!process.env[key]) {
         throw new Error(`Missing required env: ${key}`);
@@ -63,7 +61,6 @@ function requiredEnv(key) {
     return process.env[key];
 }
 
-// Pakai key DEV untuk semua environment
 const snap = new midtransClient.Snap({
     isProduction: false, // always sandbox
     serverKey: requiredEnv('MIDTRANS_SERVER_KEY_DEV'),
