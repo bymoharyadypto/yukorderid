@@ -1007,10 +1007,11 @@ class UserController {
                 enabled_payments: ['gopay', 'bank_transfer', 'credit_card', 'shopeepay'],
                 expiry: { unit: 'hour', duration: 1 }
             };
-
+            console.log('create midtrans transaction');
             const midtransResponse = await snap.createTransaction(parameter);
             // const status = await snap.transaction.status(order.id);
-            // console.log('status', status);
+            // console.log('snap', snap);
+            // console.log('midtransResponse', midtransResponse);
 
             const payment = await db.Payments.create({
                 orderId: order.id,
