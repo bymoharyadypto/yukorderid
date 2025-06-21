@@ -1,15 +1,4 @@
 // const midtransClient = require("midtrans-client");
-// require("dotenv").config();
-
-// const snap = new midtransClient.Snap({
-//     isProduction: false,
-//     serverKey: process.env.MIDTRANS_SERVER_KEY_DEV,
-//     clientKey: process.env.MIDTRANS_CLIENT_KEY_DEV,
-// });
-
-// module.exports = snap;
-
-// const midtransClient = require("midtrans-client");
 // const path = require("path");
 
 // // Load environment variables from .env.{NODE_ENV}
@@ -46,15 +35,17 @@
 
 // module.exports = snap;
 
-const midtransClient = require("midtrans-client");
+const midtransClient = require('midtrans-client');
 const path = require("path");
 
 const nodeEnv = process.env.NODE_ENV || "development";
+
 require("dotenv").config({
     path: path.resolve(__dirname, `../.env.${nodeEnv}`),
 });
 
 function requiredEnv(key) {
+    console.log(process.env, 'process.env');
     if (!process.env[key]) {
         throw new Error(`Missing required env: ${key}`);
     }
@@ -62,7 +53,7 @@ function requiredEnv(key) {
 }
 
 const snap = new midtransClient.Snap({
-    isProduction: false, // always sandbox
+    isProduction: false,
     serverKey: requiredEnv('MIDTRANS_SERVER_KEY_DEV'),
     clientKey: requiredEnv('MIDTRANS_CLIENT_KEY_DEV'),
 });
