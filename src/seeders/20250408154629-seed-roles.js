@@ -18,6 +18,21 @@ module.exports = {
         name: 'merchant',
         createdAt: new Date(),
         updatedAt: new Date()
+      },
+      {
+        name: 'superadmin',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        name: 'creator',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      },
+      {
+        name: 'fasilitator',
+        createdAt: new Date(),
+        updatedAt: new Date()
       }
     ], {});
   },

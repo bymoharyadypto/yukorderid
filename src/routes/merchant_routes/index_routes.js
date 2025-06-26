@@ -6,6 +6,8 @@ const PaymentMethodController = require("../../controllers/merchant_controllers/
 const BankController = require("../../controllers/merchant_controllers/bank_controller")
 const PaymentController = require("../../controllers/merchant_controllers/payment_controller")
 const merchantRoutes = require("./merchant_routes")
+const checkMerchantBlock = require("../../middlewares/checkMerchantBlock");
+const checkMerchantActive = require("../../middlewares/checkMerchantActive");
 
 router.get("/packages", PackageController.getAllPackages);
 router.get("/payment-methods", PaymentMethodController.getAllPaymentMethods);
@@ -15,6 +17,6 @@ router.use(verifyToken)
 router.post("/preview-checkout", UserController.previewCheckoutSubscription);
 router.post("/create-package-payment", UserController.createPaymentWithMidtrans);
 router.post("/register-merchant", canRegisterMerchant, UserController.registerUserMerchant)
-router.use("/my-merchants", validateUserMerchant, merchantRoutes)
+router.use("/my-merchants", validateUserMerchant, checkMerchantBlock, checkMerchantActive, merchantRoutes)
 
 module.exports = router;

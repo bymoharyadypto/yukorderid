@@ -49,8 +49,11 @@ class AdminController {
       });
 
       if (!user) throw { status: 404, message: "User not found" };
+      console.log(user.role.name);
+      console.log(user);
 
-      if (user.role.name !== 'admin') throw { status: 403, message: "You are not allowed to login" };
+
+      if (user.role.name !== 'admin' && user.role.name !== 'superadmin') throw { status: 403, message: "You are not allowed to login" };
 
       if (!comparePassword(password, user.password))
         throw { status: 401, name: "InvalidPassword" };

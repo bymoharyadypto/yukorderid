@@ -26,7 +26,8 @@ class OrderController {
                         attributes: ['id', 'name', 'price', 'stock', 'isActive'],
                         through: { attributes: [] },
                         where: {
-                            isActive: true
+                            isActive: true,
+                            deletedAt: null
                         },
                         required: false
                     },
@@ -81,7 +82,8 @@ class OrderController {
                     where: {
                         id: item.productId,
                         merchantId: merchant.id,
-                        isActive: true
+                        isActive: true,
+                        deletedAt: null
                     }
                 });
 
@@ -356,7 +358,8 @@ class OrderController {
                     where: {
                         id: item.productId,
                         merchantId: merchant.id,
-                        isActive: true
+                        isActive: true,
+                        deletedAt: null
                     }
                 });
 
@@ -570,7 +573,7 @@ class OrderController {
                 status: 'Pending',
                 userType: 'Customer',
                 orderType: 'Order Merchant Product',
-                paymentStatus: 'Pending',
+                paymentStatus: 'Paid',
                 merchantDiscountId,
                 isDiscount: !!voucherCode,
                 note
@@ -795,6 +798,51 @@ class OrderController {
             return res.status(500).json({ error: error.message });
         }
     }
+
+    static async confirmOrderDelivered(req, res) {
+        const t = await db.sequelize.transaction();
+        try {
+            const userId = req.user.id;
+            const orderId = req.params.orderId;
+
+            const order = await db.Orders.findOne({
+                where: {
+                    id: orderId,
+                    userId,
+                    status: 'Shipped'
+                },
+                include: [{
+                    model: db.OrderShippingMethods,
+                    as: 'orderShippingMethods',
+                    required: true
+                }]
+            });
+
+            if (!order) {
+                throw new Error('Order tidak ditemukan atau belum dalam status dikirim');
+            }
+
+            await order.update({ status: 'Delivered' }, { transaction: t });
+            await order.OrderShippingMethod.update(
+                { deliveredAt: new Date() },
+                { transaction: t }
+            );
+
+            await db.OrderStatusHistories.create({
+                orderId: order.id,
+                status: 'Delivered',
+                changeAt: new Date(),
+                notes: 'Dikonfirmasi oleh customer'
+            }, { transaction: t });
+
+            await t.commit();
+            return res.status(200).json({ message: 'Order dikonfirmasi telah diterima' });
+        } catch (err) {
+            await t.rollback();
+            return res.status(400).json({ error: err.message });
+        }
+    }
+
 
 }
 

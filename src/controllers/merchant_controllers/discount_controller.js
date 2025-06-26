@@ -231,7 +231,7 @@ class MerchantDiscountController {
                 }
             } else {
                 const allProductIds = await db.MerchantProducts.findAll({
-                    where: { merchantId: merchant.id, isActive: true },
+                    where: { merchantId: merchant.id, isActive: true, deletedAt: null },
                     attributes: ['id']
                 });
                 const ids = allProductIds.map(p => p.id);
@@ -311,7 +311,8 @@ class MerchantDiscountController {
                         // through: { attributes: ['merchantProductId', 'merchantDiscountId'] },
                         through: { attributes: [] },
                         where: {
-                            isActive: true
+                            isActive: true,
+                            deletedAt: null
                         },
                         required: false
                     },

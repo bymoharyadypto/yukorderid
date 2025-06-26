@@ -213,7 +213,7 @@ class MerchantProductController {
                 return res.status(403).json({ error: 'Merchant tidak ditemukan untuk user ini' });
             }
 
-            const whereCondition = { merchantId };
+            const whereCondition = { merchantId, deletedAt: null };
             if (isActive) {
                 whereCondition.isActive = isActive;
             }
@@ -296,7 +296,9 @@ class MerchantProductController {
             const product = await db.MerchantProducts.findOne({
                 where: {
                     id: merchantProductId,
-                    merchantId
+                    merchantId,
+                    deletedAt: null,
+                    isActive: true
                 },
                 attributes: ['id', 'name', 'description', "weight", "dimensions", "packaging", 'price', 'crossedPrice', 'stock', 'isPreOrder', 'preOrderDays', 'isActive'],
                 include: [
@@ -412,7 +414,7 @@ class MerchantProductController {
                 return res.status(400).json({ message: 'Total stok varian tidak boleh melebihi stok produk utama' });
             }
 
-            const product = await db.MerchantProducts.findOne({ where: { id: merchantProductId, merchantId } });
+            const product = await db.MerchantProducts.findOne({ where: { id: merchantProductId, merchantId, deletedAt: null } });
             if (!product) {
                 return res.status(404).json({ message: 'Produk tidak ditemukan' });
             }
@@ -578,7 +580,7 @@ class MerchantProductController {
             const [updatedRows] = await db.MerchantProducts.update(
                 { isActive },
                 {
-                    where: { id: merchantProductId, merchantId },
+                    where: { id: merchantProductId, merchantId, deletedAt: null },
                     transaction
                 }
             );

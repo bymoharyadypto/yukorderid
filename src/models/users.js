@@ -51,6 +51,7 @@ module.exports = (sequelize, DataTypes) => {
       isVerified: DataTypes.BOOLEAN,
       createdAt: DataTypes.DATE,
       updatedAt: DataTypes.DATE,
+      isBlock: DataTypes.BOOLEAN,
     },
     // {
     //   sequelize,
