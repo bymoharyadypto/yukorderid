@@ -46,7 +46,11 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: true,
       unique: true,
     },
-    isActive: DataTypes.BOOLEAN
+    isActive: DataTypes.BOOLEAN,
+    isBlock: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
   }, {
     sequelize,
     modelName: 'Merchants',

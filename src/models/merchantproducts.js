@@ -62,7 +62,8 @@ module.exports = (sequelize, DataTypes) => {
     isActive: DataTypes.BOOLEAN,
     weight: DataTypes.STRING,
     dimensions: DataTypes.STRING,
-    packaging: DataTypes.STRING
+    packaging: DataTypes.STRING,
+    deletedAt: DataTypes.DATE // Soft delete field
   }, {
     sequelize,
     modelName: 'MerchantProducts',

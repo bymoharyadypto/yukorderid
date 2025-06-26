@@ -39,7 +39,7 @@ class PublicController {
                 return res.status(404).json({ message: 'Toko tidak ditemukan.' });
             }
 
-            const whereCondition = { merchantId: merchant.id };
+            const whereCondition = { merchantId: merchant.id, deletedAt: null };
             if (req.query.isActive) {
                 whereCondition.isActive = req.query.isActive === 'true';
             }
