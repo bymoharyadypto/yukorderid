@@ -29,6 +29,7 @@ class MerchantManageController {
 
             const { count, rows } = await db.Merchants.findAndCountAll({
                 where: whereClause,
+                distict: true,
                 include: [
                     {
                         model: db.Users,
