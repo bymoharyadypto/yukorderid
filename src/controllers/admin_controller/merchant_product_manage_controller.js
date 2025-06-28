@@ -21,6 +21,7 @@ class MerchantProductManageController {
 
             const { count, rows } = await db.MerchantProducts.findAndCountAll({
                 where: whereClause,
+                distict: true,
                 include: [
                     {
                         model: db.MerchantProductImages,
