@@ -3,14 +3,14 @@ const db = require('../../models');
 class MerchantProductManageController {
     static async getMerchantProductList(req, res) {
         try {
-            const { merchantId } = req.params;
+            // const { merchantId } = req.params;
             const { currentPage = 1, perPage = 10, orderBy = 'createdAt', orderDirection = 'DESC', search = '' } = req.query;
 
             const offset = (parseInt(currentPage) - 1) * parseInt(perPage);
             const limit = parseInt(perPage);
 
             const whereClause = {
-                merchantId,
+                // merchantId,
                 ...(search && {
                     [Op.or]: [
                         { name: { [Op.like]: `%${search}%` } },
