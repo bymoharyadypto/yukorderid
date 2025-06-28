@@ -68,8 +68,8 @@ class MerchantManageController {
                 pagination: {
                     currentPage: parseInt(currentPage),
                     perPage: parseInt(perPage),
-                    totalData: count,
-                    totalPages: Math.ceil(count / perPage)
+                    totalPages: Math.ceil(count / perPage),
+                    totalData: count
                 },
                 data: formatted
             });
