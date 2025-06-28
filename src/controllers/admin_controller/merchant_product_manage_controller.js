@@ -24,6 +24,11 @@ class MerchantProductManageController {
                 distinct: true,
                 include: [
                     {
+                        model: db.Merchants,
+                        as: 'merchant',
+                        attributes: ['id', 'name', 'phoneNumber', 'email'],
+                    },
+                    {
                         model: db.MerchantProductImages,
                         as: 'images',
                         attributes: ['id', 'imageUrl']

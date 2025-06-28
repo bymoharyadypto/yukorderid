@@ -43,6 +43,17 @@ class CustomerManageController {
                         ]
                     ]
                 },
+                // include: [
+                //     {
+                //         model: db.Orders,
+                //         as: 'orders',
+                //         attributes: [[fn('COUNT', col('id')), 'totalTransaction']],
+                //         where: { status: 'Delivered' },
+                //         required: false
+                //     },
+
+
+                // ],
                 order: [[orderBy, orderDirection]],
                 offset,
                 limit
