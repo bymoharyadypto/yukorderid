@@ -1,4 +1,5 @@
 const db = require('../../models');
+const { Op, fn, col, literal } = require('sequelize');
 
 class CustomerManageController {
     static async getCustomerListWithPagination(req, res) {
@@ -25,6 +26,23 @@ class CustomerManageController {
 
             const { count, rows } = await db.Users.findAndCountAll({
                 where: { ...whereClause, roleId: 2 },
+                attributes: {
+                    id: true,
+                    name: true,
+                    phoneNumber: true,
+                    email: true,
+                    createdAt: true,
+                    include: [
+                        [
+                            literal(`(
+                            SELECT COALESCE(SUM(o.totalAmount), 0)
+                            FROM Orders AS o
+                            WHERE o.userId = Users.id AND o.status = 'Delivered'
+                        )`),
+                            'totalTransaction'
+                        ]
+                    ]
+                },
                 order: [[orderBy, orderDirection]],
                 offset,
                 limit
@@ -35,7 +53,8 @@ class CustomerManageController {
                 name: customer.name,
                 phoneNumber: customer.phoneNumber,
                 email: customer.email,
-                createdAt: customer.createdAt
+                createdAt: customer.createdAt,
+                totalTransaction: customer.getDataValue('totalTransaction') || 0
             }));
 
             return res.status(200).json({
@@ -54,3 +73,5 @@ class CustomerManageController {
         }
     }
 }
+
+module.exports = CustomerManageController;
