@@ -22,7 +22,7 @@ module.exports = (sequelize, DataTypes) => {
       Merchants.hasOne(models.MerchantBalances, { as: 'balance', foreignKey: 'merchantId' });
       Merchants.hasMany(models.MerchantExpenseCategories, { foreignKey: 'merchantId' });
       Merchants.hasMany(models.MerchantExpenses, { foreignKey: 'merchantId' });
-      Merchants.belongsTo(models.Users, { as: 'user', foreignKey: 'userId' })
+      Merchants.belongsTo(models.Users, { as: 'user', foreignKey: 'userId' });
     }
   }
   Merchants.init({

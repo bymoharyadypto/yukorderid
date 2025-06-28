@@ -74,6 +74,11 @@ class MerchantController {
                         ],
                         where: { isPrimary: true },
                         required: false
+                    },
+                    {
+                        model: db.MerchantBalances,
+                        as: 'balance',
+                        attributes: ['id', 'merchantId', 'balance', 'pendingWithdraw', 'lastUpdated'],
                     }
                 ],
                 order: [['createdAt', 'DESC']]
@@ -107,7 +112,8 @@ class MerchantController {
                     merchantProfile: m.merchantProfile,
                     subscription: m.subscription,
                     operatingHours: m.operatingHours,
-                    bankAccounts: m.bankAccounts
+                    bankAccounts: m.bankAccounts,
+                    balance: m.balance,
                 };
             });
             return res.status(200).json({
@@ -185,6 +191,11 @@ class MerchantController {
                             }
                         ],
                         where: { isPrimary: true },
+                    },
+                    {
+                        model: db.MerchantBalances,
+                        as: 'balance',
+                        attributes: ['id', 'merchantId', 'balance', 'pendingWithdraw', 'lastUpdated'],
                     }
                 ]
             });

@@ -72,6 +72,13 @@ class PaymentController {
 
                 }, { transaction });
 
+                await db.OrderStatusHistories.create({
+                    orderId: order.id,
+                    status: 'Completed',
+                    changeAt: new Date(),
+                    notes: `Order by Midtrans callback`,
+                }, { transaction });
+
                 await transaction.commit();
                 return res.status(200).send('OK');
             } catch (err) {
