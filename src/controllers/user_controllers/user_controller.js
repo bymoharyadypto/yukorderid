@@ -417,6 +417,13 @@ class UserController {
 
                 finalOrderId = freeOrder.id;
                 newPackageId = selectedPackage.id;
+
+                await db.OrderStatusHistories.create({
+                    orderId: freeOrder.id,
+                    status: 'Completed',
+                    changeAt: new Date(),
+                    notes: `Order otomatis untuk paket gratis ${selectedPackage.name}`,
+                }, { transaction });
             } else {
                 const payment = await db.Payments.findOne({
                     where: { id: paymentId },
