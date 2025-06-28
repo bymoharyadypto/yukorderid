@@ -26,7 +26,14 @@ class MerchantProductManageController {
                     {
                         model: db.Merchants,
                         as: 'merchant',
-                        attributes: ['id', 'name', 'phoneNumber', 'email'],
+                        attributes: ['id', 'storeName', 'subdomain', 'storeUrl', 'isActive', 'isBlock'],
+                        include: [
+                            {
+                                model: db.Users,
+                                as: 'user',
+                                attributes: ['id', 'name', 'phoneNumber']
+                            }
+                        ]
                     },
                     {
                         model: db.MerchantProductImages,
@@ -98,6 +105,18 @@ class MerchantProductManageController {
             const product = await db.MerchantProducts.findOne({
                 where: { id: productId },
                 include: [
+                    {
+                        model: db.Merchants,
+                        as: 'merchant',
+                        attributes: ['id', 'storeName', 'subdomain', 'storeUrl', 'isActive', 'isBlock'],
+                        include: [
+                            {
+                                model: db.Users,
+                                as: 'user',
+                                attributes: ['id', 'name', 'phoneNumber']
+                            }
+                        ]
+                    },
                     {
                         model: db.MerchantProductImages,
                         as: 'images',
