@@ -3,6 +3,7 @@ const OrderController = require("../../controllers/customer_controllers/order_co
 // router.post("/preview", OrderController.previewOrder);
 // router.post("/", OrderController.createOrder);
 router.get("/", OrderController.getCustomerOrders);
+router.get("/:orderId", OrderController.getOrderDetails);
 router.put("/:orderId", OrderController.confirmOrderDelivered);
 
 module.exports = router;
