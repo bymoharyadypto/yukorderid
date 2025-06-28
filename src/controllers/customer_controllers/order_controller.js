@@ -799,6 +799,110 @@ class OrderController {
         }
     }
 
+    static async getOrderDetails(req, res) {
+        try {
+            const orderId = req.params.orderId;
+            const userId = req.user.id;
+
+            const order = await db.Orders.findOne({
+                attributes: { exclude: ['createdAt', 'updatedAt'] },
+                where: {
+                    id: orderId,
+                    userId,
+                    userType: 'Customer',
+                    orderType: 'Order Merchant Product'
+                },
+                include: [
+                    {
+                        model: db.OrderItems,
+                        attributes: { exclude: ['createdAt', 'updatedAt'] },
+                        as: 'orderItems',
+                        include: [
+                            {
+                                model: db.MerchantProducts,
+                                as: 'product',
+                                attributes: ['id', 'name', 'description', 'price', 'crossedPrice', 'stock', 'isPreOrder', 'preOrderDays', 'isActive'],
+                                include: [
+                                    {
+                                        model: db.MerchantProductImages,
+                                        as: 'images',
+                                        attributes: ['id', 'imageUrl']
+                                    },
+                                    {
+                                        model: db.MerchantProductVariantOptions,
+                                        attributes: { exclude: ['value', 'createdAt', 'updatedAt'] },
+                                        as: 'variantOptions',
+                                        include: [
+                                            {
+                                                model: db.MerchantProductVariantOptionValues,
+                                                attributes: { exclude: ['createdAt', 'updatedAt'] },
+                                                as: 'optionValues',
+                                                include: [
+                                                    {
+                                                        model: db.MerchantProductVariants,
+                                                        as: 'variant',
+                                                        attributes: ['id', 'name']
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            },
+                        ]
+                    },
+                    {
+                        model: db.Payments,
+                        as: 'payments',
+                        include: [
+                            {
+                                model: db.PaymentMethods,
+                                as: 'method',
+                                attributes: ['id', 'name']
+                            },
+                            {
+                                model: db.PaymentVerifications,
+                                as: 'verifications'
+                            }
+                        ]
+                    },
+                    {
+                        model: db.ShippingAddresses,
+                        as: 'shippingAddresses'
+                    },
+                    {
+                        model: db.OrderShippingMethods,
+                        as: 'orderShippingMethods',
+                        include: [
+                            {
+                                model: db.Merchants,
+                                attributes: ['id', 'storeName'],
+                                as: 'merchant'
+                            }
+                        ]
+                    },
+                    {
+                        model: db.MerchantDiscounts,
+                        required: false,
+                        as: 'merchantDiscounts',
+                        attributes: ['id', 'code', 'discountType', 'discountValue']
+                    },
+                    {
+                        model: db.OrderStatusHistories,
+                        as: 'orderStatusHistories',
+                        separate: true,
+                        order: [['changeAt', 'DESC']],
+                        limit: 1
+                    }
+                ]
+            });
+
+            return res.status(200).json({ order });
+        } catch (error) {
+            return res.status(500).json({ error: error.message });
+        }
+    }
+
     static async confirmOrderDelivered(req, res) {
         const t = await db.sequelize.transaction();
         try {

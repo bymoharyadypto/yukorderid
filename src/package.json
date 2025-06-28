@@ -25,6 +25,7 @@
     "midtrans-client": "^1.4.3",
     "morgan": "^1.10.0",
     "mysql2": "^3.14.0",
+    "node-cron": "^4.1.1",
     "nodemon": "^3.1.9",
     "pg": "^8.14.1",
     "sequelize": "^6.37.7",
