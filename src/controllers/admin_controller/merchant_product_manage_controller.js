@@ -73,8 +73,8 @@ class MerchantProductManageController {
             res.status(200).json({
                 message: "Success",
                 data: {
-                    totalCount: count,
                     currentPage: parseInt(currentPage),
+                    perPage: parseInt(perPage),
                     totalPages: Math.ceil(count / perPage),
                     products: rows
                 }
