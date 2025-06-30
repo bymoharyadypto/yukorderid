@@ -116,9 +116,9 @@ class OrderController {
                     {
                         model: db.OrderStatusHistories,
                         as: 'orderStatusHistories',
-                        separate: true,
+                        // separate: true,
                         order: [['changeAt', 'DESC']],
-                        limit: 1
+                        // limit: 1
                     }
                 ]
             });
@@ -394,6 +394,10 @@ class OrderController {
                 where: { id: merchantId, userId, isActive: true }
             });
 
+            if (!merchant) {
+                return res.status(403).json({ error: 'Merchant tidak ditemukan' });
+            }
+
             const shipping = await db.OrderShippingMethods.findOne({
                 where: {
                     orderId,
@@ -521,5 +525,60 @@ class OrderController {
             return res.status(400).json({ error: error.message });
         }
     }
+
+    static async markOrderAsCompletedByMerchant(req, res) {
+        const t = await db.sequelize.transaction();
+        try {
+            const { orderId, merchantId } = req.params;
+            const { id: userId } = req.user;
+
+            const merchant = await db.Merchants.findOne({
+                where: { id: merchantId, userId, isActive: true }
+            });
+
+            if (!merchant) {
+                return res.status(403).json({ error: 'Merchant tidak ditemukan' });
+            }
+
+            const order = await db.Orders.findOne({
+                where: {
+                    id: orderId,
+                    status: 'Delivered'
+                },
+                include: [
+                    {
+                        model: db.OrderItems,
+                        include: [
+                            {
+                                model: db.MerchantProducts,
+                                where: { merchantId },
+                                required: true
+                            }
+                        ]
+                    }
+                ]
+            });
+
+            if (!order) {
+                throw new Error('Order tidak ditemukan atau belum dalam status Delivered');
+            }
+
+            await order.update({ status: 'Completed' }, { transaction: t });
+
+            await db.OrderStatusHistories.create({
+                orderId: order.id,
+                status: 'Completed',
+                changeAt: new Date(),
+                notes: 'Order ditandai selesai oleh merchant'
+            }, { transaction: t });
+
+            await t.commit();
+            return res.status(200).json({ message: 'Order berhasil ditandai selesai' });
+        } catch (err) {
+            await t.rollback();
+            return res.status(400).json({ error: err.message });
+        }
+    }
+
 }
 module.exports = OrderController
