@@ -786,7 +786,7 @@ class OrderController {
                     {
                         model: db.OrderStatusHistories,
                         as: 'orderStatusHistories',
-                        separate: true,
+                        // separate: true,
                         order: [['changeAt', 'DESC']],
                         // limit: 1
                     }
