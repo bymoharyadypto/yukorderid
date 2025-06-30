@@ -927,7 +927,7 @@ class OrderController {
             }
 
             await order.update({ status: 'Delivered' }, { transaction: t });
-            await order.OrderShippingMethod.update(
+            await order.orderShippingMethods.update(
                 { deliveredAt: new Date() },
                 { transaction: t }
             );
