@@ -788,7 +788,7 @@ class OrderController {
                         as: 'orderStatusHistories',
                         separate: true,
                         order: [['changeAt', 'DESC']],
-                        limit: 1
+                        // limit: 1
                     }
                 ]
             });
