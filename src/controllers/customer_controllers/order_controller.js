@@ -927,9 +927,9 @@ class OrderController {
             }
 
             await order.update({ status: 'Delivered' }, { transaction: t });
-            await order.orderShippingMethods.update(
+            await db.OrderShippingMethods.update(
                 { deliveredAt: new Date() },
-                { transaction: t }
+                { where: { orderId: order.id }, transaction: t }
             );
 
             await db.OrderStatusHistories.create({
