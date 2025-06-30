@@ -548,10 +548,12 @@ class OrderController {
                 include: [
                     {
                         model: db.OrderItems,
+                        as: 'orderItems',
                         include: [
                             {
                                 model: db.MerchantProducts,
-                                where: { merchantId },
+                                as: 'product',
+                                where: { merchantId: merchant.id },
                                 required: true
                             }
                         ]
