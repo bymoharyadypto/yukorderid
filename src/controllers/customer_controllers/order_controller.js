@@ -354,7 +354,7 @@ class OrderController {
             // }
             for (const item of items) {
                 const product = await db.MerchantProducts.findOne({
-                    attributes: ["id", "name", "price", "crossedPrice", "stock", "isPreOrder", "isActive"],
+                    attributes: ["id", "merchantId", "name", "price", "crossedPrice", "stock", "isPreOrder", "isActive"],
                     where: {
                         id: item.productId,
                         merchantId: merchant.id,
