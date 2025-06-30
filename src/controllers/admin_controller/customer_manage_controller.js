@@ -37,7 +37,7 @@ class CustomerManageController {
                             literal(`(
                             SELECT COALESCE(SUM(o.totalAmount), 0)
                             FROM Orders AS o
-                            WHERE o.userId = Users.id AND o.status = 'Delivered'
+                            WHERE o.userId = Users.id AND o.status = 'Completed'
                         )`),
                             'totalTransaction'
                         ]
