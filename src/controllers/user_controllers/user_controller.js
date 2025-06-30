@@ -407,6 +407,7 @@ class UserController {
                 const freeOrder = await db.Orders.create({
                     userId: existingUser.id,
                     subTotalAmount: selectedPackage.price,
+                    isDiscount: false,
                     discountAmount: 0,
                     totalAmount: selectedPackage.price,
                     status: 'Completed',
