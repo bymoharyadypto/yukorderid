@@ -224,6 +224,7 @@ class HomeController {
             }
 
             const order = await db.Orders.create({
+                transactionNumber: transactionNumber,
                 userId,
                 subTotalAmount: selectedPackage.price,
                 discountAmount: 0,
