@@ -583,6 +583,8 @@ class OrderController {
             await db.OrderItems.bulkCreate(itemsWithOrderId, { transaction: t });
 
             for (const item of itemDetails) {
+                if (item.isPreOrder) continue;
+
                 if (item.variantOptionId) {
                     const variantOption = await db.MerchantProductVariantOptions.findOne({
                         attributes: ["id", "stock"],
@@ -626,7 +628,6 @@ class OrderController {
                     );
                 }
             }
-
 
             for (const [merchantId, fee] of Object.entries(shippingFees)) {
                 await db.OrderShippingMethods.create({

@@ -11,12 +11,12 @@ module.exports = (sequelize, DataTypes) => {
      */
     static associate(models) {
       // define association here
-      Merchants.hasMany(models.MerchantProducts, { as: 'products', foreignKey: 'merchantId' })
-      Merchants.hasOne(models.MerchantSubscriptions, { as: 'subscription', foreignKey: 'merchantId' })
-      Merchants.hasOne(models.MerchantProfiles, { as: 'merchantProfile', foreignKey: 'merchantId' })
-      Merchants.hasMany(models.MerchantOperatingHours, { as: 'operatingHours', foreignKey: 'merchantId' })
-      Merchants.hasMany(models.MerchantBankAccounts, { as: 'bankAccounts', foreignKey: 'merchantId' })
-      Merchants.hasMany(models.MerchantDiscounts, { as: 'discounts', foreignKey: 'merchantId' })
+      Merchants.hasMany(models.MerchantProducts, { as: 'products', foreignKey: 'merchantId' });
+      Merchants.hasOne(models.MerchantSubscriptions, { as: 'subscription', foreignKey: 'merchantId' });
+      Merchants.hasOne(models.MerchantProfiles, { as: 'merchantProfile', foreignKey: 'merchantId' });
+      Merchants.hasMany(models.MerchantOperatingHours, { as: 'operatingHours', foreignKey: 'merchantId' });
+      Merchants.hasMany(models.MerchantBankAccounts, { as: 'bankAccounts', foreignKey: 'merchantId' });
+      Merchants.hasMany(models.MerchantDiscounts, { as: 'discounts', foreignKey: 'merchantId' });
       Merchants.hasMany(models.MerchantPaymentMethods, { as: 'paymentMethods', foreignKey: 'merchantId' });
       Merchants.hasMany(models.MerchantQRIS, { as: 'qrisList', foreignKey: 'merchantId' });
       Merchants.hasOne(models.MerchantBalances, { as: 'balance', foreignKey: 'merchantId' });
