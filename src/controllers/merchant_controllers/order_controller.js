@@ -327,16 +327,28 @@ class OrderController {
                         // lock: t.LOCK.UPDATE
                     });
 
-                    if (!variantOption || variantOption.stock < quantity) {
-                        throw new Error(`Stok tidak cukup untuk varian produk ${productRow.name}`);
+                    // if (!variantOption || variantOption.stock < quantity) {
+                    //     throw new Error(`Stok tidak cukup untuk varian produk ${productRow.name}`);
+                    // }
+
+                    // variantOption.stock -= quantity;
+                    // await variantOption.save({ transaction: t });
+
+                    if (!variantOption) {
+                        throw new Error(`Varian produk tidak ditemukan untuk ${productRow.name}`);
                     }
 
-                    variantOption.stock -= quantity;
-                    await variantOption.save({ transaction: t });
+                    if (variantOption.stock < 0) {
+                        throw new Error(`Stok varian ${productRow.name} negatif, harap dicek`);
+                    }
+                } else {
+                    if (productRow.stock < 0) {
+                        throw new Error(`Stok produk ${productRow.name} negatif, harap dicek`);
+                    }
                 }
 
-                productRow.stock -= quantity;
-                await productRow.save({ transaction: t });
+                // productRow.stock -= quantity;
+                // await productRow.save({ transaction: t });
 
                 await db.OrderStatusHistories.create({
                     orderId: order.id,

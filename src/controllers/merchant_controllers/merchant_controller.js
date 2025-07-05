@@ -229,6 +229,7 @@ class MerchantController {
         const transaction = await db.sequelize.transaction();
         try {
             const merchantId = req.params.merchantId;
+
             const {
                 storeName,
                 storeUrl,
@@ -238,7 +239,9 @@ class MerchantController {
                 operatingHours,
             } = req.body;
 
-            const merchant = await db.Merchants.findOne({ where: { id: merchantId }, transaction });
+
+            const merchant = await db.Merchants.findOne({ where: { id: merchantId, isActive: true }, transaction });
+
             if (!merchant) {
                 return res.status(404).json({ message: "Merchant tidak ditemukan" });
             }
